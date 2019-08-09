@@ -17,8 +17,16 @@
 - 使用了 sony 唯一id生成工具作为MySQL默认主键id
 - 使用了 toml 作为配置工具
 - 使用 swagger 作为文档生成工具
+- 使用了 facebook/gracehttp 作为优雅重启方案
 
 
 - 编译之后在本项目根路径运行才能正确读取 configs 等各种静态资源
 - Makefile 需要自己按需建立
-- 不用clone此项目,直接下载 zip 包并将 关键字starter和 golang-project 替换为自己的项目关键字
+
+### 使用方式
+- 下载此项目的 zip 包， 然后将 go.mod 的moudle name 替换为自己定义的名字,然后将对应原来代码里边的 starter 全部替换为自己定义的名字即可
+- 建议业务代码写到 internal 下边，按模块分类, 比如internal/admin 为管理相关代码,  internal/api 为接口相关代码(里边目前有两个默认的,只是示例,可以直接删除掉)
+- 然后将 main.go 在 cmd 目录下建立对应的 admin 和 api 目录，分别在里边建立 main.go
+- session中间件需要在调用 server.Run() 之前注入
+- 如果要提供普通的增删改查操作, 可以查看 internal/manager/router.go 里边的示例,基本只需要建立好数据模型的结构体之后就能进行管理的CURD和基本查询操作了
+- 
