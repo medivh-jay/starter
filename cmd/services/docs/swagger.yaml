@@ -1,0 +1,46 @@
+basePath: '{{.BasePath}}'
+definitions:
+  entities.Order:
+    properties:
+      amount:
+        description: 总金额
+        type: integer
+      item_id:
+        description: 订单id
+        type: string
+      total:
+        description: 总数量
+        type: integer
+    required:
+    - amount
+    - item_id
+    - total
+    type: object
+host: golang-project.com
+info:
+  contact: {}
+  description: '{{.Description}}'
+  license: {}
+  title: starter
+  version: "1.0"
+paths:
+  /order:
+    get:
+      parameters:
+      - description: 订单id
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "0":
+          schema:
+            $ref: '#/definitions/entities.Order'
+            type: object
+        "404": {}
+      summary: 订单
+      tags:
+      - 订单列表
+swagger: "2.0"

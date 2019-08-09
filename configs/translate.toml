@@ -1,0 +1,18 @@
+[ParamsValidError]
+zh-cn="参数验证失败"
+en-us="params valid error"
+[FAIL]
+zh-cn="操作失败"
+en-us="fail"
+[SUCCESS]
+zh-cn="操作成功"
+en-us="success"
+[OperateIdCanNotBeNull]
+zh-cn="id不能为空"
+en-us="id can not be null"
+[CsrfTokenError]
+zh-cn="表单已经过期,请刷新"
+en-us="form expired, please refresh"
+[AuthFailed]
+zh-cn="认证失败"
+en-us="auth failed"

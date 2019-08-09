@@ -1,0 +1,67 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "{{.Description}}",
+        "title": "starter",
+        "contact": {},
+        "license": {},
+        "version": "1.0"
+    },
+    "host": "golang-project.com",
+    "basePath": "{{.BasePath}}",
+    "paths": {
+        "/order": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "订单列表"
+                ],
+                "summary": "订单",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "订单id",
+                        "name": "id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "0": {
+                        "schema": {
+                            "type": "object",
+                            "$ref": "#/definitions/entities.Order"
+                        }
+                    },
+                    "404": {}
+                }
+            }
+        }
+    },
+    "definitions": {
+        "entities.Order": {
+            "type": "object",
+            "required": [
+                "amount",
+                "item_id",
+                "total"
+            ],
+            "properties": {
+                "amount": {
+                    "description": "总金额",
+                    "type": "integer"
+                },
+                "item_id": {
+                    "description": "订单id",
+                    "type": "string"
+                },
+                "total": {
+                    "description": "总数量",
+                    "type": "integer"
+                }
+            }
+        }
+    }
+}

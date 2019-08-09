@@ -1,0 +1,20 @@
+[application]
+addr = ":22222"
+# ssl证书信息,文件地址
+cert_file = ""
+key_file = ""
+
+[mysql]
+
+[mongo]
+
+[redis]
+
+
+# elastic 连接信息
+[elasticsearch]
+url = "http://192.168.1.163:9200"
+username = ""
+password = ""
+
+[cdn]
