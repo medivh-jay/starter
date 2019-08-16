@@ -43,10 +43,14 @@ func (query *MysqlQuery) createTagQuery(entityTyp reflect.Type, ctx *gin.Context
 func (query *MysqlQuery) GetQuery(ctx *gin.Context) (statement string, params []interface{}) {
 	query.statement = ""
 	query.params = make([]interface{}, 0, 0)
-	nextId := ctx.DefaultQuery("next_id", "")
-	if nextId != "" {
+	after, before := ctx.DefaultQuery("after_id", ""), ctx.DefaultQuery("before_id", "")
+	if after != "" {
 		query.statement = "id > ?"
-		query.params = append(params, nextId)
+		query.params = append(params, after)
+	}
+	if before != "" {
+		query.statement = "id < ?"
+		query.params = append(params, before)
 	}
 
 	query.createTagQuery(databaseTyp, ctx)
@@ -74,9 +78,12 @@ type MongoQuery struct {
 func (query *MongoQuery) GetQuery(ctx *gin.Context) bson.M {
 
 	query.query = make(bson.M)
-	nextId := ctx.DefaultQuery("next_id", "")
-	if nextId != "" {
-		query.query["_id"] = bson.M{"$gt": query.convertId(nextId)}
+	after, before := ctx.DefaultQuery("after_id", ""), ctx.DefaultQuery("before_id", "")
+	if after != "" {
+		query.query["_id"] = bson.M{"$gt": query.convertId(after)}
+	}
+	if before != "" {
+		query.query["_id"] = bson.M{"$lt": query.convertId(before)}
 	}
 
 	query.createTagQuery(query.entityTyp, ctx)
@@ -138,9 +145,12 @@ type MgoQuery struct {
 func (query *MgoQuery) GetQuery(ctx *gin.Context) mgoBson.M {
 
 	query.query = make(mgoBson.M)
-	nextId := ctx.DefaultQuery("next_id", "")
-	if nextId != "" {
-		query.query["_id"] = bson.M{"$gt": query.convertId(nextId)}
+	after, before := ctx.DefaultQuery("after_id", ""), ctx.DefaultQuery("before_id", "")
+	if after != "" {
+		query.query["_id"] = bson.M{"$gt": query.convertId(after)}
+	}
+	if before != "" {
+		query.query["_id"] = bson.M{"$lt": query.convertId(before)}
 	}
 
 	query.createTagQuery(query.entityTyp, ctx)

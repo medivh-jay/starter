@@ -11,8 +11,9 @@ import (
 	"os"
 	"starter/pkg/app"
 	"starter/pkg/config"
-	_ "starter/pkg/config"
-	_ "starter/pkg/log"
+	"starter/pkg/elastic"
+	starterLog "starter/pkg/log"
+	"starter/pkg/mgo"
 	"starter/pkg/mongo"
 	"starter/pkg/orm"
 	"starter/pkg/redis"
@@ -22,13 +23,23 @@ import (
 var (
 	pidFile     = fmt.Sprintf("./%s.pid", app.Name())
 	Mode        string
+	After       func(engine *gin.Engine) // 在各项服务启动之后会执行的操作
 	swagHandler gin.HandlerFunc
 )
 
 func init() {
+	config.Load()
+}
+
+// 启动各项服务
+func start() {
+	starterLog.Start()
+
 	orm.Start()
 	mongo.Start()
+	mgo.Start()
 	redis.Start()
+	elastic.Start()
 
 	// 将 gin 的验证器替换为 v9 版本
 	binding.Validator = new(validator.Validator)
@@ -39,8 +50,13 @@ func Run(engine *gin.Engine) {
 	lock := createPid()
 	defer lock.UnLock()
 
+	start()
 	if swagHandler != nil && gin.Mode() != gin.ReleaseMode {
 		engine.GET("/doc/*any", swagHandler)
+	}
+
+	if After != nil {
+		After(engine)
 	}
 
 	_ = gracehttp.ServeWithOptions([]*http.Server{createServer(engine)}, gracehttp.PreStartProcess(func() error {

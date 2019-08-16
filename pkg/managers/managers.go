@@ -24,12 +24,13 @@ type (
 	EntityTyp int
 	Managers  []ManagerInterface
 	Response  struct {
-		Data    interface{} `json:"data"`    // 数据集
-		NextId  interface{} `json:"next_id"` // 开始id
-		Rows    int         `json:"rows"`    // 每页条数
-		Count   int         `json:"count"`   // 总数
-		Message string      `json:"message"`
-		Code    int         `json:"code"`
+		Data     interface{} `json:"data"`      // 数据集
+		AfterId  interface{} `json:"after_id"`  // 下一页,这个id为这一页最后一条id
+		BeforeId interface{} `json:"before_id"` // 上一页,这个id为这一页第一条id
+		Rows     int         `json:"rows"`      // 每页条数
+		Count    int         `json:"count"`     // 总数
+		Message  string      `json:"message"`
+		Code     int         `json:"code"`
 	}
 	ManagerInterface interface {
 		List(*gin.Context)
@@ -76,7 +77,8 @@ func (manager *MgoManager) SetTableTyp(typ reflect.Type)   { manager.TableTyp = 
 func NewResponse(data interface{}, code int) *Response {
 	var response = &Response{}
 	response.Data = data
-	response.NextId = ""
+	response.AfterId = ""
+	response.BeforeId = ""
 	response.Rows = 0
 	response.Count = 0
 	response.Message = ""
@@ -84,8 +86,12 @@ func NewResponse(data interface{}, code int) *Response {
 	return response
 }
 
-func (response *Response) SetNextId(nextId interface{}) *Response {
-	response.NextId = nextId
+func (response *Response) SetAfterId(nextId interface{}) *Response {
+	response.AfterId = nextId
+	return response
+}
+func (response *Response) SetBeforeId(nextId interface{}) *Response {
+	response.BeforeId = nextId
 	return response
 }
 func (response *Response) SetRows(rows int) *Response   { response.Rows = rows; return response }
@@ -107,7 +113,7 @@ func Start(engine *gin.Engine) {
 }
 
 // 实例化一个新的默认管理器
-func NewManager(route, table string, entity interface{}, entityTyp EntityTyp) Managers {
+func Register(route, table string, entity interface{}, entityTyp EntityTyp) Managers {
 	switch entityTyp {
 	case Mysql:
 		newManager := &MysqlManager{TableName: table, TableTyp: reflect.TypeOf(entity), Route: route}
@@ -124,7 +130,7 @@ func NewManager(route, table string, entity interface{}, entityTyp EntityTyp) Ma
 
 // 自定义管理器
 // 可自己继承 MysqlManager 或者 MongoManager 然后重写方法实现自定义操作
-func NewCustomManager(managerInterface ManagerInterface, route, table string, entity interface{}) Managers {
+func RegisterCustomManager(managerInterface ManagerInterface, route, table string, entity interface{}) Managers {
 	managerInterface.SetRoute(route)
 	managerInterface.SetTableName(table)
 	managerInterface.SetTableTyp(reflect.TypeOf(entity))
@@ -140,6 +146,14 @@ func (manager *MysqlManager) List(ctx *gin.Context) {
 	var query = &MysqlQuery{entityTyp: manager.TableTyp}
 
 	statement, params := query.GetQuery(ctx)
+	parse := ParseSectionParams(ctx)
+	parse.Engine = Mysql
+	if statement != "" {
+		statement = statement + " and " + parse.Parse().(string)
+	} else {
+		statement = parse.Parse().(string)
+	}
+
 	orm.Master().Table(manager.TableName).Where(statement, params...).Limit(query.Limit(ctx)).Offset(query.Offset(ctx)).Find(items.Interface())
 
 	var response = NewResponse(items.Interface(), app.Success)
@@ -147,7 +161,8 @@ func (manager *MysqlManager) List(ctx *gin.Context) {
 	orm.Master().Table(manager.TableName).Where(statement, params...).Count(&response.Count)
 
 	if items.Elem().Len() > 0 {
-		response.SetNextId(items.Elem().Index(items.Elem().Len() - 1).FieldByName("Id").Interface())
+		response.SetAfterId(items.Elem().Index(items.Elem().Len() - 1).FieldByName("Id").Interface())
+		response.SetBeforeId(items.Elem().Index(0).FieldByName("Id").Interface())
 	}
 
 	message := app.Translate(ctx.DefaultQuery("lang", "zh-cn"), "SUCCESS")
@@ -164,7 +179,7 @@ func (manager *MysqlManager) Post(ctx *gin.Context) {
 		if err != nil {
 			var response = NewResponse(nil, app.Fail)
 			message := app.Translate(ctx.DefaultQuery("lang", "zh-cn"), "FAIL")
-			response.SetNextId("").SetRows(0).SetCount(0).SetMessage(message).SetCount(app.Fail)
+			response.SetMessage(message).SetCount(app.Fail)
 			ctx.JSON(http.StatusOK, response)
 			return
 		}
@@ -232,6 +247,11 @@ func (manager *MongoManager) List(ctx *gin.Context) {
 	newInstance := reflect.MakeSlice(reflect.SliceOf(manager.TableTyp), 0, 0)
 	items := reflect.New(newInstance.Type())
 	items.Elem().Set(newInstance)
+
+	parse := ParseSectionParams(ctx)
+	parse.Engine = Mongo
+	statement = mergeMongo(statement, parse.Parse().(bson.M))
+
 	mongo.Collection(manager.TableName).Where(statement).Limit(int64(query.Limit(ctx))).Skip(int64(query.Offset(ctx))).FindMany(items.Interface())
 
 	var response = NewResponse(items.Interface(), app.Success)
@@ -239,7 +259,8 @@ func (manager *MongoManager) List(ctx *gin.Context) {
 	response.SetCount(int(mongo.Collection(manager.TableName).Where(statement).Count()))
 
 	if items.Elem().Len() > 0 {
-		response.SetNextId(items.Elem().Index(items.Elem().Len() - 1).FieldByName("Id").Interface())
+		response.SetAfterId(items.Elem().Index(items.Elem().Len() - 1).FieldByName("Id").Interface())
+		response.SetBeforeId(items.Elem().Index(0).FieldByName("Id").Interface())
 	}
 
 	message := app.Translate(ctx.DefaultQuery("lang", "zh-cn"), "SUCCESS")
@@ -327,13 +348,18 @@ func (manager *MgoManager) List(ctx *gin.Context) {
 	collection := mgo.Collection(manager.TableName)
 	defer collection.Close()
 
+	parse := ParseSectionParams(ctx)
+	parse.Engine = Mgo
+	statement = mergeMgo(statement, parse.Parse().(mgoBson.M))
+
 	collection.Where(statement).Limit(query.Limit(ctx)).Skip(query.Offset(ctx)).FindMany(items.Interface())
 	var response = NewResponse(items.Interface(), app.Success)
 	response.SetRows(query.Limit(ctx))
 	response.SetCount(int(collection.Where(statement).Count()))
 
 	if items.Elem().Len() > 0 {
-		response.SetNextId(items.Elem().Index(items.Elem().Len() - 1).FieldByName("Id").Interface())
+		response.SetAfterId(items.Elem().Index(items.Elem().Len() - 1).FieldByName("Id").Interface())
+		response.SetBeforeId(items.Elem().Index(0).FieldByName("Id").Interface())
 	}
 
 	message := app.Translate(ctx.DefaultQuery("lang", "zh-cn"), "SUCCESS")

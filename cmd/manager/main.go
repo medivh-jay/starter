@@ -28,6 +28,5 @@ func main() {
 
 	id, _ := primitive.ObjectIDFromHex("5d4bc41a80a1cd400ae715f7")
 	log.Println(middlewares.NewToken(id, 1, time.Now().Add(3600*time.Second).Unix()))
-
 	server.Run(manager.GetEngine())
 }

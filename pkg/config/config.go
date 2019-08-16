@@ -114,7 +114,7 @@ type (
 var Config config
 var Payment payment
 
-func init() {
+func Load() {
 	loadConfig()
 }
 

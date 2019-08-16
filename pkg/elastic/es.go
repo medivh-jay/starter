@@ -7,11 +7,11 @@ import (
 	"starter/pkg/config"
 )
 
-var es *elastic.Client
+var ES *elastic.Client
 var err error
 
-func init() {
-	es, err = elastic.NewClientFromConfig(config.ElasticSearchConfig())
+func Start() {
+	ES, err = elastic.NewClientFromConfig(config.ElasticSearchConfig())
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -19,7 +19,7 @@ func init() {
 
 // 向es写入数据
 func Insert(index string, body interface{}) *elastic.IndexResponse {
-	rs, err := es.Index().Index(index).BodyJson(body).Do(context.Background())
+	rs, err := ES.Index().Index(index).BodyJson(body).Do(context.Background())
 	if err != nil {
 		log.Println("es write error: ", err)
 	}
@@ -28,7 +28,7 @@ func Insert(index string, body interface{}) *elastic.IndexResponse {
 }
 
 func InsertString(index string, body string) *elastic.IndexResponse {
-	rs, err := es.Index().Index(index).BodyString(body).Do(context.Background())
+	rs, err := ES.Index().Index(index).BodyString(body).Do(context.Background())
 	if err != nil {
 		log.Println("es write error: ", err)
 	}

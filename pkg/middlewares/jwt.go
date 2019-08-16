@@ -48,6 +48,7 @@ func VerifyAuth(c *gin.Context) {
 					return
 				} else {
 					c.Set(AuthKey, entity.Interface())
+					c.Header(JwtHeaderKey, token)
 					c.Next()
 					return
 				}

@@ -114,12 +114,13 @@ func Bind(c *gin.Context, param interface{}) *ValidErrors {
 	err := c.ShouldBind(param)
 	var validErrors = newValidErrors()
 	if err != nil {
-		errs := err.(validator.ValidationErrors)
-		for _, value := range errs {
-			validErrors.add(value.Field(), value.Translate(trans))
+		errs, ok := err.(validator.ValidationErrors)
+		if ok {
+			for _, value := range errs {
+				validErrors.add(value.Field(), value.Translate(trans))
+			}
 		}
 	}
-
 	return validErrors
 }
 
