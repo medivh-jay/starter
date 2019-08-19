@@ -2,6 +2,7 @@
 package managers
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	mgoBson "gopkg.in/mgo.v2/bson"
@@ -154,7 +155,8 @@ func (manager *MysqlManager) List(ctx *gin.Context) {
 		statement = parse.Parse().(string)
 	}
 
-	orm.Master().Table(manager.TableName).Where(statement, params...).Limit(query.Limit(ctx)).Offset(query.Offset(ctx)).Find(items.Interface())
+	var sorts = NewSorter(Mysql).Parse(ctx).(string)
+	orm.Master().Table(manager.TableName).Where(statement, params...).Limit(query.Limit(ctx)).Offset(query.Offset(ctx)).Order(sorts).Find(items.Interface())
 
 	var response = NewResponse(items.Interface(), app.Success)
 	response.SetRows(query.Limit(ctx))
@@ -252,7 +254,9 @@ func (manager *MongoManager) List(ctx *gin.Context) {
 	parse.Engine = Mongo
 	statement = mergeMongo(statement, parse.Parse().(bson.M))
 
-	mongo.Collection(manager.TableName).Where(statement).Limit(int64(query.Limit(ctx))).Skip(int64(query.Offset(ctx))).FindMany(items.Interface())
+	sorts := NewSorter(Mongo).Parse(ctx).(bson.M)
+	fmt.Println(sorts)
+	mongo.Collection(manager.TableName).Where(statement).Limit(int64(query.Limit(ctx))).Skip(int64(query.Offset(ctx))).Sort(sorts).FindMany(items.Interface())
 
 	var response = NewResponse(items.Interface(), app.Success)
 	response.SetRows(query.Limit(ctx))
@@ -351,8 +355,9 @@ func (manager *MgoManager) List(ctx *gin.Context) {
 	parse := ParseSectionParams(ctx)
 	parse.Engine = Mgo
 	statement = mergeMgo(statement, parse.Parse().(mgoBson.M))
+	var sorts = NewSorter(Mgo).Parse(ctx).([]string)
 
-	collection.Where(statement).Limit(query.Limit(ctx)).Skip(query.Offset(ctx)).FindMany(items.Interface())
+	collection.Where(statement).Limit(query.Limit(ctx)).Skip(query.Offset(ctx)).Sort(sorts...).FindMany(items.Interface())
 	var response = NewResponse(items.Interface(), app.Success)
 	response.SetRows(query.Limit(ctx))
 	response.SetCount(int(collection.Where(statement).Count()))
