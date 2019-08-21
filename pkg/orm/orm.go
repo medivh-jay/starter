@@ -38,7 +38,8 @@ func Start() {
 
 	orm.Master, err = gorm.Open("mysql", createConnectionUrl(master.Username, master.Password, master.Addr, master.DbName))
 	if err != nil {
-		log.Fatalln(err)
+		log.Println("database connect error, you can't use orm support")
+		log.Println(err)
 	}
 	orm.Master.LogMode(true)
 	orm.Master.DB().SetMaxIdleConns(database.Master.MaxIdle)
@@ -47,7 +48,8 @@ func Start() {
 	for _, slave := range database.Slaves {
 		connect, err := gorm.Open("mysql", createConnectionUrl(slave.Username, slave.Password, slave.Addr, slave.DbName))
 		if err != nil {
-			log.Fatalln(err)
+			log.Println("database connect error, you can't use orm support")
+			log.Println(err)
 		}
 		orm.Slaves = append(orm.Slaves, connect)
 	}
@@ -76,6 +78,7 @@ func (db *Database) BeforeCreate(scope *gorm.Scope) error {
 
 func (db *Database) BeforeUpdate(scope *gorm.Scope) error {
 	t := time.Now().Unix()
+	scope.Set("gorm:update_column", true)
 	_ = scope.SetColumn("updated_at", t)
 	return nil
 }

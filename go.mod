@@ -20,6 +20,7 @@ require (
 	github.com/go-playground/universal-translator v0.16.0
 	github.com/go-redis/redis v6.15.2+incompatible
 	github.com/jinzhu/gorm v1.9.10
+	github.com/json-iterator/go v1.1.6
 	github.com/leodido/go-urn v1.1.0 // indirect
 	github.com/olivere/elastic/v7 v7.0.5
 	github.com/pkg/errors v0.8.1

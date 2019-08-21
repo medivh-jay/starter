@@ -269,7 +269,6 @@ func BeforeCreate(document interface{}) interface{} {
 func BeforeUpdate(document interface{}) interface{} {
 	val := reflect.ValueOf(document)
 	typ := reflect.TypeOf(document)
-
 	switch typ.Kind() {
 	case reflect.Ptr:
 		return BeforeUpdate(val.Elem().Interface())
@@ -277,14 +276,16 @@ func BeforeUpdate(document interface{}) interface{} {
 	case reflect.Array, reflect.Slice:
 		var sliceData = make([]interface{}, val.Len(), val.Cap())
 		for i := 0; i < val.Len(); i++ {
-			sliceData[i] = BeforeCreate(val.Index(i).Interface()).(bson.M)
+			sliceData[i] = BeforeUpdate(val.Index(i).Interface()).(bson.M)
 		}
 		return sliceData
 
 	case reflect.Struct:
 		var data = make(bson.M)
 		for i := 0; i < typ.NumField(); i++ {
-			data[typ.Field(i).Tag.Get("bson")] = val.Field(i).Interface()
+			if !isZero(val.Field(i)) {
+				data[typ.Field(i).Tag.Get("bson")] = val.Field(i).Interface()
+			}
 		}
 		dataVal := reflect.ValueOf(data)
 		dataVal.SetMapIndex(reflect.ValueOf("updated_at"), reflect.ValueOf(time.Now().Unix()))
@@ -296,4 +297,22 @@ func BeforeUpdate(document interface{}) interface{} {
 		}
 		return val.Interface()
 	}
+}
+
+func isZero(value reflect.Value) bool {
+	switch value.Kind() {
+	case reflect.String:
+		return value.Len() == 0
+	case reflect.Bool:
+		return !value.Bool()
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return value.Int() == 0
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return value.Uint() == 0
+	case reflect.Float32, reflect.Float64:
+		return value.Float() == 0
+	case reflect.Interface, reflect.Ptr:
+		return value.IsNil()
+	}
+	return reflect.DeepEqual(value.Interface(), reflect.Zero(value.Type()).Interface())
 }

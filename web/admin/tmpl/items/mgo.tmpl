@@ -1,0 +1,48 @@
+{{define "/mgo"}}
+    {{template "/header"}}
+    {{template "/nav-bar" map `{"menu":"会员管理", "title":"会员列表(动态表格)"}`}}
+    <div class="layui-fluid">
+
+        {{ template "form-begin" }}
+        {{ template "form-text" map `{"title":"用户名", "name": "username", "placeholder": "请输入用户登录账户名称", "verify": "required"}` }}
+        {{ template "form-checkbox" map `{"title":"用户名(示例)", "name": "test_1", "data":"[{'_id':'111', 'name':'bbb'},{'_id':'222', 'name':'ccc'}]", "key":"_id", "val":"name"}` }}
+        {{ template "form-checkbox" map `{"title":"用户名(示例)", "name": "test_2", "data":"[{'_id':'111', 'name':'bbb'},{'_id':'222', 'name':'ccc'}]", "key":"_id", "val":"name"}` }}
+        {{ template "form-checkbox" map `{"title":"用户名(示例)", "name": "test_3", "data":"/staff/list?limit=10000", "key":"_id", "val":"username"}` }}
+        {{ template "form-textarea" map `{"title":"富文本示例", name":"textarea"}` }}
+        {{ template "form-end" }}
+
+        <div class="layui-row layui-col-space15">
+            <div class="layui-col-md12">
+                <div class="layui-card">
+                    {{template "/search-form-begin"}}
+
+                    {{template "search-date-pick" map `{"name":"created_at", "rg": "~", "placeholder": "选择创建时间范围"}`}}
+                    {{template "search-date-pick" map `{"name":"-updated_at", "placeholder": "最大更新时间"}`}}
+                    {{template "search-text" map `{"name":"username", "placeholder": "用户名"}`}}
+
+                    {{template "/search-form-end"}}
+
+                    <div class="layui-card-header">
+                        <button class="layui-btn" onclick="admin.openForm()"><i class="layui-icon"></i>添加</button>
+                    </div>
+                    {{template "/table"}}
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+
+        admin.renderList("/mgo", [[
+            {field: '_id', title: 'ID', sort: true, fixed: 'left'},
+            {field: 'username', title: '用户名'},
+            {field: 'created_at', title: '创建时间', sort: true, templet: admin.time2str},
+            {field: 'updated_at', title: '最后更新时间', templet: admin.time2str},
+            {title: '操作', toolbar: '#curd'},
+        ]]);
+
+    </script>
+
+    {{template "/footer"}}
+{{end}}

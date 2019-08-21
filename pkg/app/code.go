@@ -5,9 +5,10 @@ const (
 	Success  = 0
 	NotFound = 404
 	Fail     = 500
+	AuthFail = 401
 )
 
 // 自定义的一些错误消息的返回
 const (
-	AuthFail = "AuthFailed"
+	AuthFailMessage = "AuthFailed"
 )

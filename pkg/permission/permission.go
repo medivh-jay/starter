@@ -72,9 +72,12 @@ func GetPermissionsForUser(id string) []Permission {
 }
 
 // 是否是超级管理员
-func isRoot(id string) bool {
-	permissions := GetPermissionsForUser(id)
-	for _, permission := range permissions {
+func isRoot(id string, permissions ...[]Permission) bool {
+	var perm []Permission
+	if len(permissions) == 0 {
+		perm = GetPermissionsForUser(id)
+	}
+	for _, permission := range perm {
 		if permission.Path == "*" && permission.Method == "*" {
 			return permission.Filters == nil
 		}
@@ -83,12 +86,12 @@ func isRoot(id string) bool {
 }
 
 func HasPermission(id string, ctx *gin.Context) bool {
+	permissions := GetPermissionsForUser(id)
 	// root 用户拥有一切权限
-	if isRoot(id) {
+	if isRoot(id, permissions) {
 		return true
 	}
 	path, method := ctx.Request.URL.Path, ctx.Request.Method
-	permissions := GetPermissionsForUser(id)
 
 	for _, permission := range permissions {
 		// 请求方式与已有权限匹配并且请求路径也匹配,无限制字段值,拥有权限

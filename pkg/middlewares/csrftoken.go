@@ -30,7 +30,7 @@ func CsrfToken(ctx *gin.Context) {
 		sessions.Del(ctx, key)
 		token := generateToken()
 		sessions.Set(ctx, key, token)
-		ctx.SetCookie(key, token, 3600, "/", config.Config.Sessions.Domain, false, true)
+		ctx.SetCookie(key, token, 3600, "/", config.Config.Sessions.Domain, false, false)
 	default:
 		token, err := ctx.Cookie(key)
 		if err != nil || token == "" {

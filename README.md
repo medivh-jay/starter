@@ -110,4 +110,26 @@ managers.Start(engine)
 ```
 
 
-- 正在考虑是否加入直接可用可快速开发的对后端友好的前后端分离的可单独使用的后台管理模板
+- 正在考虑是否加入直接可用可快速开发的对后端友好的前后端分离的可单独使用的后台管理模板(已添加)
+- 后端模板使用 x-admin 和 layUI 进行布局和动态操作
+- 目前实现的是基本的增删改查操作, 代码在 web/admin/statc/js/admin.js 里边
+- 登录和退出只是实现了跳转, 并没有写实际功能
+- 运行 cmd/admin ，然后访问 /main 或者 /login 即可
+- 为了有一个交互测试, 可以运行 cmd/manager ， 需要注意跨域问题和 JWT 验证, JWT 验证需要一个可解析数据表作为支持, 比如现在默认的 staffs
+
+- 之后将准备将 managers 包中部分代码提出来, 单独实现数据分页工具
+- 可能会将 MySQL 和 mongo 和 mgo 的表都提供 TableName 方法来获取表名, 而不是手写, 容易乱
+- 还有其他的.....
+
+- 感谢 
+
+- [LayUI](https://www.layui.com/)
+- [X-admin](http://x.xuebingsi.com/)
+- [gin](https://github.com/gin-gonic/gin)
+- [BurntSushi/toml](https://github.com/BurntSushi/toml)
+- [dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go)
+- [jinzhu/gorm](https://github.com/jinzhu/gorm)
+- [json-iterator](https://github.com/json-iterator/go)
+- [sony/sonyflake](https://github.com/sony/sonyflake)
+- [swaggo](https://github.com/swaggo)
+- [mgo](https://gopkg.in/mgo.v2)

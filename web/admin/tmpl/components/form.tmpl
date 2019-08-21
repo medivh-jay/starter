@@ -1,0 +1,19 @@
+{{define "form-begin"}}
+<script type="text/html" id="edit-form">
+    <div class="layui-fluid">
+        <div class="layui-row">
+            <form class="layui-form" lay-filter="edit-form">
+                {{end}}
+
+                {{define "form-end"}}
+                <div class="layui-form-item">
+                    <div class="layui-input-block">
+                        <button class="layui-btn" lay-submit lay-filter="form-submit">立即提交</button>
+                        <button type="reset" class="layui-btn layui-btn-primary">重置</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</script>
+{{end}}

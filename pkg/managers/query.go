@@ -67,7 +67,9 @@ func (query *MysqlQuery) Limit(ctx *gin.Context) int {
 
 // 不提供 offset 操作
 func (query *MysqlQuery) Offset(ctx *gin.Context) int {
-	return 0
+	page := ctx.DefaultQuery("page", "1")
+	num, _ := strconv.Atoi(page)
+	return (num - 1) * (query.Limit(ctx))
 }
 
 type MongoQuery struct {
@@ -134,7 +136,10 @@ func (query *MongoQuery) convertId(id string) interface{} {
 
 // 不提供 offset 操作
 func (query *MongoQuery) Offset(ctx *gin.Context) int {
-	return 0
+	page := ctx.DefaultQuery("page", "1")
+	num, _ := strconv.Atoi(page)
+	return (num - 1) * (query.Limit(ctx))
+	//return 0
 }
 
 type MgoQuery struct {
@@ -201,5 +206,7 @@ func (query *MgoQuery) convertId(id string) interface{} {
 
 // 不提供 offset 操作
 func (query *MgoQuery) Offset(ctx *gin.Context) int {
-	return 0
+	page := ctx.DefaultQuery("page", "1")
+	num, _ := strconv.Atoi(page)
+	return (num - 1) * (query.Limit(ctx))
 }

@@ -2,7 +2,6 @@
 package managers
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	mgoBson "gopkg.in/mgo.v2/bson"
@@ -207,7 +206,7 @@ func (manager *MysqlManager) Put(ctx *gin.Context) {
 	var newInstance = reflect.New(manager.TableTyp)
 	validate := validator.Bind(ctx, newInstance.Interface())
 	if validate.IsValid() {
-		err := orm.Master().Table(manager.TableName).Where("id = ?", id).Updates(newInstance.Interface()).Error
+		err := orm.Master().Table(manager.TableName).Model(newInstance.Interface()).Where("id = ?", id).Update(newInstance.Interface()).Error
 		if err != nil {
 			message := app.Translate(lang, "FAIL")
 			ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(message).SetCount(app.Fail))
@@ -255,7 +254,6 @@ func (manager *MongoManager) List(ctx *gin.Context) {
 	statement = mergeMongo(statement, parse.Parse().(bson.M))
 
 	sorts := NewSorter(Mongo).Parse(ctx).(bson.M)
-	fmt.Println(sorts)
 	mongo.Collection(manager.TableName).Where(statement).Limit(int64(query.Limit(ctx))).Skip(int64(query.Offset(ctx))).Sort(sorts).FindMany(items.Interface())
 
 	var response = NewResponse(items.Interface(), app.Success)

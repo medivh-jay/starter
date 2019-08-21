@@ -43,7 +43,7 @@ func VerifyAuth(c *gin.Context) {
 			loginAt := entity.Elem().FieldByName("LoginAt")
 			if err == nil && loginAt.IsValid() {
 				if loginAt.MapIndex(reflect.ValueOf(c.DefaultQuery("platform", "web"))).Interface() != claims.LoginAt {
-					app.NewResponse(app.Success, nil, app.AuthFail).End(c, http.StatusUnauthorized)
+					app.NewResponse(app.AuthFail, nil, app.AuthFailMessage).End(c, http.StatusUnauthorized)
 					c.Abort()
 					return
 				} else {
@@ -55,7 +55,7 @@ func VerifyAuth(c *gin.Context) {
 			}
 		}
 	}
-	app.NewResponse(app.Success, nil, app.AuthFail).End(c, http.StatusUnauthorized)
+	app.NewResponse(app.AuthFail, nil, app.AuthFailMessage).End(c, http.StatusUnauthorized)
 	c.Abort()
 }
 

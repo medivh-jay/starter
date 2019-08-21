@@ -12,6 +12,7 @@ import (
 var engine = gin.Default()
 
 func GetEngine() *gin.Engine {
+	engine.Use(middlewares.CORS)
 	engine.Use(middlewares.VerifyAuth)
 	sessions.Start(engine)
 	engine.Use(middlewares.CsrfToken)

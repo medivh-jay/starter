@@ -1,0 +1,27 @@
+{{ define "form-text"}}
+    <div class="layui-form-item">
+        <label for="form-{{.name}}" class="layui-form-label">{{.title}}</label>
+        <div class="layui-input-block">
+            <input id="form-{{.name}}" type="text" name="{{.name}}" lay-verify="{{.verify}}"
+                   placeholder="{{.placeholder}}" autocomplete="off" class="layui-input">
+        </div>
+    </div>
+{{end}}
+
+{{ define "form-checkbox" }}
+    <div class="layui-form-item checkbox-list" data-list="{{.data}}" data-name="{{.name}}" data-key="{{.key}}"
+         data-val="{{.val}}">
+        <label class="layui-form-label">{{.title}}</label>
+        <div class="layui-input-block" id="form-{{.name}}">
+        </div>
+    </div>
+{{ end }}
+
+{{ define "form-textarea" }}
+    <div class="layui-form-item">
+        <label for="form-{{.name}}" class="layui-form-label">{{.title}}</label>
+        <div class="layui-input-block">
+            <textarea id="textarea" name="{{.name}}" style="display: none;"></textarea>
+        </div>
+    </div>
+{{ end }}

@@ -1,0 +1,12 @@
+{{ define "search-date-pick"}}
+    <div class="layui-inline layui-show-xs-block">
+        <input class="layui-input search-date-pick" autocomplete="off" placeholder="{{.placeholder}}"
+               data-range="{{.rg}}" data-type="{{.type}}" name="section:{{.name}}" id="{{.name}}">
+    </div>
+{{ end }}
+
+{{define "search-text"}}
+    <div class="layui-inline layui-show-xs-block">
+        <input type="text" name="{{.name}}" placeholder="{{.placeholder}}" autocomplete="off" class="layui-input">
+    </div>
+{{end}}
