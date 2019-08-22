@@ -1,4 +1,4 @@
-## 项目
+## STARTER  [wiki](https://github.com/medivh-jay/starter/wiki/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8)
 
 - 本项目作为启动器，整合了需要用到的常用三方库,并且封装了部分操作
 - 在使用时可按自己需要全盘修改所有内容
