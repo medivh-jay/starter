@@ -25,3 +25,11 @@ type Mgo struct {
 	CreatedAt int64         `json:"created_at" bson:"created_at"`
 	UpdatedAt int64         `json:"updated_at" bson:"updated_at"`
 }
+
+func (Staff) TableName() string {
+	return "staffs"
+}
+
+func (Mgo) TableName() string {
+	return "mgo"
+}

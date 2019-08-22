@@ -36,5 +36,6 @@ func main() {
 		context.HTML(http.StatusOK, context.Request.URL.Path, nil)
 	})
 
+	// pages.New(&Table).List(ctx)
 	server.Run(engine)
 }

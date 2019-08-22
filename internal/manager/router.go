@@ -16,9 +16,11 @@ func GetEngine() *gin.Engine {
 	engine.Use(middlewares.VerifyAuth)
 	sessions.Start(engine)
 	engine.Use(middlewares.CsrfToken)
-	managers.Register("/staff", "staffs", entities.Staff{}, managers.Mongo)
-	managers.Register("/mgo", "mgo", entities.Mgo{}, managers.Mgo)
-	managers.RegisterCustomManager(&controllers.CustomOrder{}, "/order", "orders", entities.Order{})
+
+	managers.Register(entities.Staff{}, managers.Mongo)
+	managers.Register(entities.Mgo{}, managers.Mgo)
+	managers.RegisterCustomManager(&controllers.CustomOrder{}, entities.Order{})
+
 	managers.Start(engine)
 
 	return engine

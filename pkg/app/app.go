@@ -9,6 +9,11 @@ import (
 	"path/filepath"
 )
 
+// 数据表结构体必须实现此接口
+type Table interface {
+	TableName() string
+}
+
 type response struct {
 	Code    int         `json:"code"`    // 状态码,这个状态码是与前端和APP约定的状态码,非HTTP状态码
 	Data    interface{} `json:"data"`    // 返回数据
@@ -49,6 +54,10 @@ func Root() string {
 func Name() string {
 	stat, _ := os.Stat(os.Args[0])
 	return stat.Name()
+}
+
+func Lang(ctx *gin.Context) string {
+	return ctx.DefaultQuery("lang", "zh-cn")
 }
 
 // 获取运行模式

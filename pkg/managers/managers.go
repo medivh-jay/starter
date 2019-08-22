@@ -41,6 +41,7 @@ type (
 		SetRoute(route string)
 		SetTableName(table string)
 		SetTableTyp(typ reflect.Type)
+		GetTableTyp() reflect.Type
 	}
 	MysqlManager struct {
 		TableName string
@@ -57,9 +58,38 @@ type (
 		TableTyp  reflect.Type
 		Route     string
 	}
+	Setup interface {
+		set(managerInterface ManagerInterface)
+	}
+	route struct {
+		route string
+	}
 )
 
 var managers = make(Managers, 0)
+
+// 返回一个新的默认管理器
+func (entityTyp EntityTyp) NewManager() ManagerInterface {
+	switch entityTyp {
+	case Mysql:
+		return new(MysqlManager)
+	case Mongo:
+		return new(MongoManager)
+	case Mgo:
+		return new(MgoManager)
+	}
+	panic("entity type error")
+}
+
+func (r route) set(managerInterface ManagerInterface) { managerInterface.SetRoute(r.route) }
+func SetRoute(r string) *route                        { return &route{r} }
+
+func newItems(manager ManagerInterface) reflect.Value {
+	newInstance := reflect.MakeSlice(reflect.SliceOf(manager.GetTableTyp()), 0, 0)
+	items := reflect.New(newInstance.Type())
+	items.Elem().Set(newInstance)
+	return items
+}
 
 func (manager *MysqlManager) GetRoute() string             { return manager.Route }
 func (manager *MongoManager) GetRoute() string             { return manager.Route }
@@ -73,6 +103,9 @@ func (manager *MgoManager) SetTableName(table string)      { manager.TableName =
 func (manager *MysqlManager) SetTableTyp(typ reflect.Type) { manager.TableTyp = typ }
 func (manager *MongoManager) SetTableTyp(typ reflect.Type) { manager.TableTyp = typ }
 func (manager *MgoManager) SetTableTyp(typ reflect.Type)   { manager.TableTyp = typ }
+func (manager *MysqlManager) GetTableTyp() reflect.Type    { return manager.TableTyp }
+func (manager *MongoManager) GetTableTyp() reflect.Type    { return manager.TableTyp }
+func (manager *MgoManager) GetTableTyp() reflect.Type      { return manager.TableTyp }
 
 func NewResponse(data interface{}, code int) *Response {
 	var response = &Response{}
@@ -86,6 +119,13 @@ func NewResponse(data interface{}, code int) *Response {
 	return response
 }
 
+func (response *Response) SetPageId(items reflect.Value) *Response {
+	if items.Elem().Len() > 0 {
+		response.SetAfterId(items.Elem().Index(items.Elem().Len() - 1).FieldByName("Id").Interface())
+		response.SetBeforeId(items.Elem().Index(0).FieldByName("Id").Interface())
+	}
+	return response
+}
 func (response *Response) SetAfterId(nextId interface{}) *Response {
 	response.AfterId = nextId
 	return response
@@ -96,8 +136,8 @@ func (response *Response) SetBeforeId(nextId interface{}) *Response {
 }
 func (response *Response) SetRows(rows int) *Response   { response.Rows = rows; return response }
 func (response *Response) SetCount(count int) *Response { response.Count = count; return response }
-func (response *Response) SetMessage(message string) *Response {
-	response.Message = message
+func (response *Response) SetMessage(ctx *gin.Context, message string) *Response {
+	response.Message = app.Translate(app.Lang(ctx), message)
 	return response
 }
 
@@ -113,61 +153,51 @@ func Start(engine *gin.Engine) {
 }
 
 // 实例化一个新的默认管理器
-func Register(route, table string, entity interface{}, entityTyp EntityTyp) Managers {
-	switch entityTyp {
-	case Mysql:
-		newManager := &MysqlManager{TableName: table, TableTyp: reflect.TypeOf(entity), Route: route}
-		managers = append(managers, newManager)
-	case Mongo:
-		newManager := &MongoManager{TableName: table, TableTyp: reflect.TypeOf(entity), Route: route}
-		managers = append(managers, newManager)
-	case Mgo:
-		newManager := &MgoManager{TableName: table, TableTyp: reflect.TypeOf(entity), Route: route}
-		managers = append(managers, newManager)
-	}
+func Register(entity app.Table, entityTyp EntityTyp, setups ...Setup) Managers {
+	manager := entityTyp.NewManager()
+	RegisterCustomManager(manager, entity, setups...)
 	return managers
 }
 
 // 自定义管理器
 // 可自己继承 MysqlManager 或者 MongoManager 然后重写方法实现自定义操作
-func RegisterCustomManager(managerInterface ManagerInterface, route, table string, entity interface{}) Managers {
-	managerInterface.SetRoute(route)
-	managerInterface.SetTableName(table)
-	managerInterface.SetTableTyp(reflect.TypeOf(entity))
-	managers = append(managers, managerInterface)
+func RegisterCustomManager(manager ManagerInterface, entity app.Table, setups ...Setup) Managers {
+	manager.SetRoute("/" + entity.TableName())
+	manager.SetTableName(entity.TableName())
+	manager.SetTableTyp(reflect.TypeOf(entity))
+	for _, set := range setups {
+		set.set(manager)
+	}
+	managers = append(managers, manager)
 	return managers
 }
 
 // 获取列表
 func (manager *MysqlManager) List(ctx *gin.Context) {
-	newInstance := reflect.MakeSlice(reflect.SliceOf(manager.TableTyp), 0, 0)
-	items := reflect.New(newInstance.Type())
-	items.Elem().Set(newInstance)
-	var query = &MysqlQuery{entityTyp: manager.TableTyp}
+	items := newItems(manager)
 
+	// 查询条件
+	var query = &MysqlQuery{entityTyp: manager.TableTyp}
 	statement, params := query.GetQuery(ctx)
-	parse := ParseSectionParams(ctx)
-	parse.Engine = Mysql
+
+	// 区间查询内容
+	parse := ParseSectionParams(ctx, Mysql)
 	if statement != "" {
 		statement = statement + " and " + parse.Parse().(string)
 	} else {
 		statement = parse.Parse().(string)
 	}
 
+	// 排序内容
 	var sorts = NewSorter(Mysql).Parse(ctx).(string)
+
+	// 查询
 	orm.Master().Table(manager.TableName).Where(statement, params...).Limit(query.Limit(ctx)).Offset(query.Offset(ctx)).Order(sorts).Find(items.Interface())
 
-	var response = NewResponse(items.Interface(), app.Success)
-	response.SetRows(query.Limit(ctx))
+	// 返回数据
+	var response = NewResponse(items.Interface(), app.Success).SetPageId(items).SetRows(query.Limit(ctx))
 	orm.Master().Table(manager.TableName).Where(statement, params...).Count(&response.Count)
-
-	if items.Elem().Len() > 0 {
-		response.SetAfterId(items.Elem().Index(items.Elem().Len() - 1).FieldByName("Id").Interface())
-		response.SetBeforeId(items.Elem().Index(0).FieldByName("Id").Interface())
-	}
-
-	message := app.Translate(ctx.DefaultQuery("lang", "zh-cn"), "SUCCESS")
-	response.SetMessage(message)
+	response.SetMessage(ctx, "SUCCESS")
 	ctx.JSON(http.StatusOK, response)
 }
 
@@ -178,29 +208,22 @@ func (manager *MysqlManager) Post(ctx *gin.Context) {
 	if validate.IsValid() {
 		err := orm.Master().Create(newInstance.Interface()).Error
 		if err != nil {
-			var response = NewResponse(nil, app.Fail)
-			message := app.Translate(ctx.DefaultQuery("lang", "zh-cn"), "FAIL")
-			response.SetMessage(message).SetCount(app.Fail)
-			ctx.JSON(http.StatusOK, response)
+			ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(ctx, "FAIL"))
 			return
 		}
-		var response = NewResponse(newInstance.Interface(), app.Success)
-		response.SetMessage(app.Translate(ctx.DefaultQuery("lang", "zh-cn"), "SUCCESS"))
-		ctx.JSON(http.StatusOK, response)
+
+		ctx.JSON(http.StatusOK, NewResponse(newInstance.Interface(), app.Success).SetMessage(ctx, "SUCCESS"))
 		return
 	}
-	var response = NewResponse(validate.ErrorsInfo, app.Fail)
-	response.SetMessage(app.Translate(ctx.DefaultQuery("lang", "zh-cn"), "FAIL"))
-	ctx.JSON(http.StatusOK, response)
+
+	ctx.JSON(http.StatusOK, NewResponse(validate.ErrorsInfo, app.Fail).SetMessage(ctx, "FAIL"))
 }
 
 // 修改数据
 func (manager *MysqlManager) Put(ctx *gin.Context) {
 	id := ctx.PostForm("id")
-	lang := ctx.DefaultQuery("lang", "zh-cn")
 	if id == "" {
-		ctx.JSON(http.StatusOK,
-			NewResponse(nil, app.Fail).SetMessage(app.Translate(lang, "OperateIdCanNotBeNull")))
+		ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(ctx, "OperateIdCanNotBeNull"))
 		return
 	}
 	var newInstance = reflect.New(manager.TableTyp)
@@ -208,65 +231,47 @@ func (manager *MysqlManager) Put(ctx *gin.Context) {
 	if validate.IsValid() {
 		err := orm.Master().Table(manager.TableName).Model(newInstance.Interface()).Where("id = ?", id).Update(newInstance.Interface()).Error
 		if err != nil {
-			message := app.Translate(lang, "FAIL")
-			ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(message).SetCount(app.Fail))
+			ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(ctx, "FAIL"))
 			return
 		}
-		var response = NewResponse(newInstance.Interface(), app.Success)
-		response.SetMessage(app.Translate(lang, "SUCCESS"))
-		ctx.JSON(http.StatusOK, response)
+
+		ctx.JSON(http.StatusOK, NewResponse(newInstance.Interface(), app.Success).SetMessage(ctx, "SUCCESS"))
 		return
 	}
-	var response = NewResponse(validate.ErrorsInfo, app.Fail)
-	response.SetMessage(app.Translate(lang, "FAIL"))
-	ctx.JSON(http.StatusOK, response)
+
+	ctx.JSON(http.StatusOK, NewResponse(validate.ErrorsInfo, app.Fail).SetMessage(ctx, "FAIL"))
 }
 
 // 删除数据
 func (manager *MysqlManager) Delete(ctx *gin.Context) {
 	id := ctx.Query("id")
-	lang := ctx.DefaultQuery("lang", "zh-cn")
 	if id == "" {
-		ctx.JSON(http.StatusOK,
-			NewResponse(nil, app.Fail).SetMessage(app.Translate(lang, "OperateIdCanNotBeNull")))
+		ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(ctx, "OperateIdCanNotBeNull"))
 		return
 	}
 	var newInstance = reflect.New(manager.TableTyp)
 	err := orm.Master().Table(manager.TableName).Where("id = ?", id).Delete(newInstance.Interface()).Error
 	if err != nil {
-		message := app.Translate(lang, "FAIL")
-		ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(message).SetCount(0))
+		ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(ctx, "FAIL").SetCount(0))
 		return
 	}
-	message := app.Translate(lang, "SUCCESS")
-	ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(message).SetCount(app.Success))
+	ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(ctx, "SUCCESS").SetCount(app.Success))
 }
 
 func (manager *MongoManager) List(ctx *gin.Context) {
 	var query = MongoQuery{entityTyp: manager.TableTyp}
 	statement := query.GetQuery(ctx)
-	newInstance := reflect.MakeSlice(reflect.SliceOf(manager.TableTyp), 0, 0)
-	items := reflect.New(newInstance.Type())
-	items.Elem().Set(newInstance)
+	items := newItems(manager)
 
-	parse := ParseSectionParams(ctx)
-	parse.Engine = Mongo
+	parse := ParseSectionParams(ctx, Mongo)
 	statement = mergeMongo(statement, parse.Parse().(bson.M))
 
 	sorts := NewSorter(Mongo).Parse(ctx).(bson.M)
 	mongo.Collection(manager.TableName).Where(statement).Limit(int64(query.Limit(ctx))).Skip(int64(query.Offset(ctx))).Sort(sorts).FindMany(items.Interface())
 
-	var response = NewResponse(items.Interface(), app.Success)
-	response.SetRows(query.Limit(ctx))
-	response.SetCount(int(mongo.Collection(manager.TableName).Where(statement).Count()))
+	var response = NewResponse(items.Interface(), app.Success).SetRows(query.Limit(ctx)).
+		SetCount(int(mongo.Collection(manager.TableName).Where(statement).Count())).SetPageId(items).SetMessage(ctx, "SUCCESS")
 
-	if items.Elem().Len() > 0 {
-		response.SetAfterId(items.Elem().Index(items.Elem().Len() - 1).FieldByName("Id").Interface())
-		response.SetBeforeId(items.Elem().Index(0).FieldByName("Id").Interface())
-	}
-
-	message := app.Translate(ctx.DefaultQuery("lang", "zh-cn"), "SUCCESS")
-	response.SetMessage(message)
 	ctx.JSON(http.StatusOK, response)
 }
 
@@ -276,29 +281,20 @@ func (manager *MongoManager) Post(ctx *gin.Context) {
 	if validate.IsValid() {
 		insertId := mongo.Collection(manager.TableName).InsertOne(newInstance.Interface())
 		if insertId.InsertedID == nil {
-			var response = NewResponse(nil, app.Fail)
-			message := app.Translate(ctx.DefaultQuery("lang", "zh-cn"), "FAIL")
-			response.SetMessage(message).SetCount(app.Fail)
-			ctx.JSON(http.StatusOK, response)
+			ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(ctx, "FAIL"))
 			return
 		}
 		_ = mongo.Collection(manager.TableName).Where(bson.M{"_id": insertId.InsertedID}).FindOne(newInstance.Interface())
-		var response = NewResponse(newInstance.Interface(), app.Success)
-		response.SetMessage(app.Translate(ctx.DefaultQuery("lang", "zh-cn"), "SUCCESS"))
-		ctx.JSON(http.StatusOK, response)
+		ctx.JSON(http.StatusOK, NewResponse(newInstance.Interface(), app.Success).SetMessage(ctx, "SUCCESS"))
 		return
 	}
-	var response = NewResponse(validate.ErrorsInfo, app.Fail)
-	response.SetMessage(app.Translate(ctx.DefaultQuery("lang", "zh-cn"), "FAIL"))
-	ctx.JSON(http.StatusOK, response)
+	ctx.JSON(http.StatusOK, NewResponse(validate.ErrorsInfo, app.Fail).SetMessage(ctx, "FAIL"))
 }
 
 func (manager *MongoManager) Put(ctx *gin.Context) {
 	id := ctx.PostForm("_id")
-	lang := ctx.DefaultQuery("lang", "zh-cn")
 	if id == "" {
-		ctx.JSON(http.StatusOK,
-			NewResponse(nil, app.Fail).SetMessage(app.Translate(lang, "OperateIdCanNotBeNull")))
+		ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(ctx, "OperateIdCanNotBeNull"))
 		return
 	}
 	var newInstance = reflect.New(manager.TableTyp)
@@ -308,66 +304,46 @@ func (manager *MongoManager) Put(ctx *gin.Context) {
 		newInstance.Elem().FieldByName("Id").Set(reflect.ValueOf(query.convertId(id)))
 		result := mongo.Collection(manager.TableName).Where(bson.M{"_id": query.convertId(id)}).UpdateOne(newInstance.Interface())
 		if result.ModifiedCount == 0 {
-			message := app.Translate(lang, "FAIL")
-			ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(message).SetCount(app.Fail))
+			ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(ctx, "FAIL"))
 			return
 		}
-		var response = NewResponse(newInstance.Interface(), app.Success)
-		response.SetMessage(app.Translate(lang, "SUCCESS"))
-		ctx.JSON(http.StatusOK, response)
+		ctx.JSON(http.StatusOK, NewResponse(newInstance.Interface(), app.Success).SetMessage(ctx, "SUCCESS"))
 		return
 	}
-	var response = NewResponse(validate.ErrorsInfo, app.Fail)
-	response.SetMessage(app.Translate(lang, "FAIL"))
-	ctx.JSON(http.StatusOK, response)
+	ctx.JSON(http.StatusOK, NewResponse(validate.ErrorsInfo, app.Fail).SetMessage(ctx, "FAIL"))
 }
 
 func (manager *MongoManager) Delete(ctx *gin.Context) {
 	id := ctx.Query("_id")
-	lang := ctx.DefaultQuery("lang", "zh-cn")
 	if id == "" {
-		ctx.JSON(http.StatusOK,
-			NewResponse(nil, app.Fail).SetMessage(app.Translate(lang, "OperateIdCanNotBeNull")))
+		ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(ctx, "OperateIdCanNotBeNull"))
 		return
 	}
 	var query = &MongoQuery{entityTyp: manager.TableTyp}
 	count := mongo.Collection(manager.TableName).Where(bson.M{"_id": query.convertId(id)}).Delete()
 	if count == 0 {
-		message := app.Translate(lang, "FAIL")
-		ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(message).SetCount(int(count)))
+		ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(ctx, "FAIL").SetCount(int(count)))
 		return
 	}
-	message := app.Translate(lang, "SUCCESS")
-	ctx.JSON(http.StatusOK, NewResponse(nil, app.Success).SetMessage(message).SetCount(int(count)))
+	ctx.JSON(http.StatusOK, NewResponse(nil, app.Success).SetMessage(ctx, "SUCCESS").SetCount(int(count)))
 }
 
 func (manager *MgoManager) List(ctx *gin.Context) {
 	var query = MgoQuery{entityTyp: manager.TableTyp}
 	statement := query.GetQuery(ctx)
-	newInstance := reflect.MakeSlice(reflect.SliceOf(manager.TableTyp), 0, 0)
-	items := reflect.New(newInstance.Type())
-	items.Elem().Set(newInstance)
+	items := newItems(manager)
 	collection := mgo.Collection(manager.TableName)
 	defer collection.Close()
 
-	parse := ParseSectionParams(ctx)
-	parse.Engine = Mgo
+	parse := ParseSectionParams(ctx, Mgo)
 	statement = mergeMgo(statement, parse.Parse().(mgoBson.M))
 	var sorts = NewSorter(Mgo).Parse(ctx).([]string)
 
 	collection.Where(statement).Limit(query.Limit(ctx)).Skip(query.Offset(ctx)).Sort(sorts...).FindMany(items.Interface())
-	var response = NewResponse(items.Interface(), app.Success)
-	response.SetRows(query.Limit(ctx))
-	response.SetCount(int(collection.Where(statement).Count()))
+	var response = NewResponse(items.Interface(), app.Success).SetRows(query.Limit(ctx)).
+		SetCount(int(collection.Where(statement).Count())).SetPageId(items)
 
-	if items.Elem().Len() > 0 {
-		response.SetAfterId(items.Elem().Index(items.Elem().Len() - 1).FieldByName("Id").Interface())
-		response.SetBeforeId(items.Elem().Index(0).FieldByName("Id").Interface())
-	}
-
-	message := app.Translate(ctx.DefaultQuery("lang", "zh-cn"), "SUCCESS")
-	response.SetMessage(message)
-	ctx.JSON(http.StatusOK, response)
+	ctx.JSON(http.StatusOK, response.SetMessage(ctx, "SUCCESS"))
 }
 
 func (manager *MgoManager) Post(ctx *gin.Context) {
@@ -378,29 +354,20 @@ func (manager *MgoManager) Post(ctx *gin.Context) {
 	if validate.IsValid() {
 		insert, err := collection.InsertOne(newInstance.Interface())
 		if err != nil {
-			var response = NewResponse(nil, app.Fail)
-			message := app.Translate(ctx.DefaultQuery("lang", "zh-cn"), "FAIL")
-			response.SetMessage(message).SetCount(app.Fail)
-			ctx.JSON(http.StatusOK, response)
+			ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(ctx, "FAIL"))
 			return
 		}
 
-		var response = NewResponse(insert, app.Success)
-		response.SetMessage(app.Translate(ctx.DefaultQuery("lang", "zh-cn"), "SUCCESS"))
-		ctx.JSON(http.StatusOK, response)
+		ctx.JSON(http.StatusOK, NewResponse(insert, app.Success).SetMessage(ctx, "SUCCESS"))
 		return
 	}
-	var response = NewResponse(validate.ErrorsInfo, app.Fail)
-	response.SetMessage(app.Translate(ctx.DefaultQuery("lang", "zh-cn"), "FAIL"))
-	ctx.JSON(http.StatusOK, response)
+	ctx.JSON(http.StatusOK, NewResponse(validate.ErrorsInfo, app.Fail).SetMessage(ctx, "FAIL"))
 }
 
 func (manager *MgoManager) Put(ctx *gin.Context) {
 	id := ctx.PostForm("_id")
-	lang := ctx.DefaultQuery("lang", "zh-cn")
 	if id == "" {
-		ctx.JSON(http.StatusOK,
-			NewResponse(nil, app.Fail).SetMessage(app.Translate(lang, "OperateIdCanNotBeNull")))
+		ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(ctx, "OperateIdCanNotBeNull"))
 		return
 	}
 	var newInstance = reflect.New(manager.TableTyp)
@@ -413,26 +380,19 @@ func (manager *MgoManager) Put(ctx *gin.Context) {
 		newInstance.Elem().FieldByName("Id").Set(reflect.ValueOf(query.convertId(id)))
 		result := collection.Where(mgoBson.M{"_id": query.convertId(id)}).UpdateOne(newInstance.Interface())
 		if !result {
-			message := app.Translate(lang, "FAIL")
-			ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(message).SetCount(app.Fail))
+			ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(ctx, "FAIL"))
 			return
 		}
-		var response = NewResponse(newInstance.Interface(), app.Success)
-		response.SetMessage(app.Translate(lang, "SUCCESS"))
-		ctx.JSON(http.StatusOK, response)
+		ctx.JSON(http.StatusOK, NewResponse(newInstance.Interface(), app.Success).SetMessage(ctx, "SUCCESS"))
 		return
 	}
-	var response = NewResponse(validate.ErrorsInfo, app.Fail)
-	response.SetMessage(app.Translate(lang, "FAIL"))
-	ctx.JSON(http.StatusOK, response)
+	ctx.JSON(http.StatusOK, NewResponse(validate.ErrorsInfo, app.Fail).SetMessage(ctx, "FAIL"))
 }
 
 func (manager *MgoManager) Delete(ctx *gin.Context) {
 	id := ctx.Query("_id")
-	lang := ctx.DefaultQuery("lang", "zh-cn")
 	if id == "" {
-		ctx.JSON(http.StatusOK,
-			NewResponse(nil, app.Fail).SetMessage(app.Translate(lang, "OperateIdCanNotBeNull")))
+		ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(ctx, "OperateIdCanNotBeNull"))
 		return
 	}
 	collection := mgo.Collection(manager.TableName)
@@ -440,10 +400,8 @@ func (manager *MgoManager) Delete(ctx *gin.Context) {
 	var query = &MgoQuery{entityTyp: manager.TableTyp}
 	result := collection.Where(mgoBson.M{"_id": query.convertId(id)}).Delete()
 	if !result {
-		message := app.Translate(lang, "FAIL")
-		ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(message).SetCount(1))
+		ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(ctx, "FAIL").SetCount(1))
 		return
 	}
-	message := app.Translate(lang, "SUCCESS")
-	ctx.JSON(http.StatusOK, NewResponse(nil, app.Success).SetMessage(message).SetCount(1))
+	ctx.JSON(http.StatusOK, NewResponse(nil, app.Success).SetMessage(ctx, "SUCCESS").SetCount(1))
 }

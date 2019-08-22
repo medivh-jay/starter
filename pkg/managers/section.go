@@ -147,9 +147,10 @@ func (gteLteQuery *GteLteQuery) Parse(engine EntityTyp) interface{} {
 //  例子: ?section=created_at:1,100&section=updated_at:50&section=-age:60 表示区间筛选条件为 created_at 大于1 小于 100 并且 updated_at 大于 50 并且 age 小于 60
 //
 //  注意: 值类型必须是整型
-func ParseSectionParams(c *gin.Context) Sections {
+func ParseSectionParams(c *gin.Context, typ EntityTyp) Sections {
 	sections := c.Request.URL.Query()["section"]
 	var sq = Sections{queries: make([]Parse, len(sections))}
+	sq.Engine = typ
 	i := 0
 
 	for _, section := range sections {

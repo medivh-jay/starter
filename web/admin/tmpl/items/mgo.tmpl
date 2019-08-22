@@ -5,7 +5,7 @@
 
         {{ template "form-begin" }}
         {{ template "form-text" map `{"title":"用户名", "name": "username", "placeholder": "请输入用户登录账户名称", "verify": "required"}` }}
-        {{ template "form-checkbox" map `{"title":"用户名(示例)", "name": "members", "data":"/staff/list?limit=10000", "key":"_id", "val":"username"}` }}
+        {{ template "form-checkbox" map `{"title":"用户名(示例)", "name": "members", "data":"/staffs/list?limit=10000", "key":"_id", "val":"username"}` }}
         {{ template "form-textarea" map `{"title":"富文本示例", "name":"textarea"}` }}
         {{ template "form-end" }}
 
