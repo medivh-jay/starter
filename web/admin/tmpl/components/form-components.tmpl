@@ -20,8 +20,8 @@
 {{ define "form-textarea" }}
     <div class="layui-form-item">
         <label for="form-{{.name}}" class="layui-form-label">{{.title}}</label>
-        <div class="layui-input-block">
-            <textarea id="textarea" name="{{.name}}" style="display: none;"></textarea>
+        <div class="layui-input-block textarea" name="{{.name}}">
+{{/*            <textarea class="textarea" name="{{.name}}"></textarea>*/}}
         </div>
     </div>
 {{ end }}

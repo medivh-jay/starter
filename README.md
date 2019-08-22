@@ -119,7 +119,10 @@ managers.Start(engine)
 
 - 之后将准备将 managers 包中部分代码提出来, 单独实现数据分页工具
 - 可能会将 MySQL 和 mongo 和 mgo 的表都提供 TableName 方法来获取表名, 而不是手写, 容易乱
+- 可能准备实现一个简单的后台登录实际功能, 统一的后端文件上传功能, 权限管理的界面实现, 慢慢来
 - 还有其他的.....
+
+![admin](web/admin/static/images/admin.png)
 
 - 感谢 
 
@@ -133,3 +136,4 @@ managers.Start(engine)
 - [sony/sonyflake](https://github.com/sony/sonyflake)
 - [swaggo](https://github.com/swaggo)
 - [mgo](https://gopkg.in/mgo.v2)
+- [wangEditor](http://www.wangeditor.com/index.html)

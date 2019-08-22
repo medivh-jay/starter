@@ -8,6 +8,30 @@
     win.Admin = function (api) {
         this.api = api;
         this.jwt = localStorage.getItem('jwt');
+        this.editors = {};
+    };
+
+    Admin.prototype.jquerySetup = function () {
+        $.ajaxSetup({
+            complete: function (XMLHttpRequest, textStatus) {
+
+                switch (XMLHttpRequest.status) {
+                    case 500:
+                        layer.msg('服务器内部错误');
+                }
+
+                switch (XMLHttpRequest.responseJSON.code) {
+                    case 401:
+                        layer.msg(XMLHttpRequest.responseJSON.message, function () {
+                            if (window !== top) {
+                                top.location.href = '/login';
+                            } else {
+                                location.href = '/login';
+                            }
+                        })
+                }
+            }
+        });
     };
 
     /**
@@ -18,7 +42,7 @@
     Admin.prototype.login = function (username, password) {
         // 登录逻辑
         console.log(this.api);
-        localStorage.setItem("jwt", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJJZCI6IjVkNGJjNDFhODBhMWNkNDAwYWU3MTVmNyIsIkxvZ2luQXQiOjEsImV4cCI6MTU2NjMyNTExOX0.Zt9Fa0X_EalbWEwXV4Qf3VRsB6Unsnq0ft1_LonRB6M");
+        localStorage.setItem("jwt", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJJZCI6IjVkNGJjNDFhODBhMWNkNDAwYWU3MTVmNyIsIkxvZ2luQXQiOjEsImV4cCI6MTU2NjQ3OTEyN30.C4lTqT8sTs-RnjhjFSSyFIdvVabuo-XRwLTuSL0dz40");
         location.href = "/main";
     };
 
@@ -55,7 +79,7 @@
         layui.$.ajax({
             url: _this.api + _this.path,
             method: method,
-            data: data,
+            data: _this.formArrayFixed(data),
             headers: {
                 'JWT': _this.jwt,
             },
@@ -71,6 +95,31 @@
             }
         });
         layer.close(layer.index);
+    };
+
+    Admin.prototype.formArrayFixed = function (data) {
+        for (let i in data) {
+            if ( data.hasOwnProperty(i) ) {
+                if (/\w+\[\d+]/.test(i)) {
+                    let key = i.match(/(\w+)\[\d+]/)[1];
+                    if (data.hasOwnProperty(key)) {
+                        data[key].push(data[i])
+                    } else {
+                        data[key] = [];
+                        data[key].push(data[i]);
+                    }
+                    delete data[i];
+                }
+            }
+        }
+
+        for ( let i in this.editors ) {
+            if (this.editors.hasOwnProperty(i)) {
+                data[i] = this.editors[i].txt.html()
+            }
+        }
+
+        return data;
     };
 
     Admin.prototype.openForm = function (editData) {
@@ -160,6 +209,7 @@
                         headers: {
                             'JWT': _this.jwt,
                         },
+                        async: false,
                         crossDomain: true,                 //加这二行支持ajax跨域，允许跨域
                         xhrFields: {withCredentials: true},//加这二行支持ajax跨域，携带凭证
                         success: function (data) {
@@ -167,23 +217,6 @@
                                 console.log(data.data[i]);
                                 input.innerHTML += '<input value="' + data.data[i][key] + '" type="checkbox" name="' + name + '[]" title="' + data.data[i][val] + '">'
                             }
-                            // form.on('submit(form-submit)', function (formData) {
-                            //     if (editData !== null && editData !== undefined) {
-                            //         _this.addData(dataValid(formData.field, editData), 'PUT');
-                            //         return false;
-                            //     }
-                            //     _this.addData(formData.field, 'POST');
-                            //     return false;
-                            // });
-                            // if (editData !== null && editData !== undefined) {
-                            //     form.val('edit-form', editData);
-                            // }
-                            // layui.use('layedit', function () {
-                            //     let layedit = layui.layedit;
-                            //     let index = layedit.build('textarea'); //建立编辑器
-                            //     layedit.sync(index)
-                            // });
-                            // form.render();
                         }
                     });
                 }
@@ -199,12 +232,27 @@
             });
             if (editData !== null && editData !== undefined) {
                 form.val('edit-form', editData);
+                for (let i in editData) {
+                    if (editData.hasOwnProperty(i)) {
+                        if ((typeof editData[i]) !== "string") {
+                            for (let key in editData[i]) {
+                                if (editData[i].hasOwnProperty(key))
+                                    $('input[value="' + editData[i][key] + '"]').next().click();
+                            }
+                        }
+                    }
+                }
             }
-            layui.use('layedit', function () {
-                let layedit = layui.layedit;
-                let index = layedit.build('textarea'); //建立编辑器
-                layedit.sync(index)
-            });
+
+            let textareas = $('.textarea');
+            for (let i = 0; i < textareas.length; i++) {
+                _this.editors[$(textareas[i])[0].getAttribute('name')] = new wangEditor($(textareas[i])[0]);
+                _this.editors[$(textareas[i])[0].getAttribute('name')].create();
+                if ( ((editData !== null && editData !== undefined) ) && editData.hasOwnProperty($(textareas[i])[0].getAttribute('name')) ) {
+                    _this.editors[$(textareas[i])[0].getAttribute('name')].txt.html(editData[$(textareas[i])[0].getAttribute('name')]);
+                }
+            }
+
             form.render();
         })
     };
@@ -276,19 +324,21 @@
 
                 let section = 'section=';
                 for (let key in data.field) {
-                    if (key.startsWith("section:")) {
-                        let realKey = key.replace("section:", "");
-                        let date = data.field[key].split('~');
-                        if (date.length === 2) {
-                            // 如果是一个时间区间, 生成 -key:date,date
-                            section += realKey + ':' + dateToDate(date[0]) + ',' + dateToDate(date[1]) + '&section=';
-                        } else {
-                            if (date[0] !== '' && date[0].length > 0) {
-                                // 如果是一个时间, 那么需要在输入框name设置为 section:-key:date
-                                section += realKey + ':' + dateToDate(date[0]) + '&section=';
+                    if (data.field.hasOwnProperty(key)) {
+                        if (key.startsWith("section:")) {
+                            let realKey = key.replace("section:", "");
+                            let date = data.field[key].split('~');
+                            if (date.length === 2) {
+                                // 如果是一个时间区间, 生成 -key:date,date
+                                section += realKey + ':' + dateToDate(date[0]) + ',' + dateToDate(date[1]) + '&section=';
+                            } else {
+                                if (date[0] !== '' && date[0].length > 0) {
+                                    // 如果是一个时间, 那么需要在输入框name设置为 section:-key:date
+                                    section += realKey + ':' + dateToDate(date[0]) + '&section=';
+                                }
                             }
+                            delete data.field[key];
                         }
-                        delete data.field[key];
                     }
                 }
 
@@ -340,11 +390,12 @@
         for (let i = 0; i < inputs.length; i++) {
             this.datePick('#' + inputs[i].id, inputs[i].getAttribute("data-range"), inputs[i].getAttribute("data-type"));
         }
-
+        let _this = this;
         this.path = path;
         this.search();
         this.curd();
         layui.use('table', function () {
+            _this.jquerySetup();
             let table = layui.table;
             table.render({
                 elem: '#data-list',
