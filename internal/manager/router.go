@@ -17,11 +17,16 @@ func GetEngine() *gin.Engine {
 	sessions.Start(engine)
 	engine.Use(middlewares.CsrfToken)
 
-	managers.Register(entities.Staff{}, managers.Mongo)
-	managers.Register(entities.Mgo{}, managers.Mgo)
-	managers.RegisterCustomManager(&controllers.CustomOrder{}, entities.Order{})
+	managers.New().
+		Register(entities.Staff{}, managers.Mongo).
+		Register(entities.Mgo{}, managers.Mgo).
+		RegisterCustomManager(&controllers.CustomOrder{}, entities.Order{}).
+		Start(engine)
 
-	managers.Start(engine)
+	managers.New().
+		Register(entities.Staff{}, managers.Mongo).
+		Register(entities.Mgo{}, managers.Mgo).
+		Start(engine.Group("/container"))
 
 	return engine
 }

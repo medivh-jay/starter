@@ -5,6 +5,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"log"
 	"reflect"
+	"starter/pkg/app"
 	"starter/pkg/config"
 	"strings"
 	"time"
@@ -43,13 +44,13 @@ func Start() {
 
 // 得到一个mongo操作对象
 // 请显示调用 Close 方法释放session
-func Collection(table string) *collection {
+func Collection(table app.Table) *collection {
 	database := db.Copy()
 	session := database.DB(config.Config.Mongo.Database)
 	return &collection{
 		Database: database,
 		Session:  session,
-		Table:    session.C(table),
+		Table:    session.C(table.TableName()),
 		filter:   make(bson.M),
 	}
 

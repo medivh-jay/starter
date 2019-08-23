@@ -21,9 +21,8 @@ type claims struct {
 
 // 认证表信息,该表需要为mongo
 type Auth struct {
-	TableName string      // 表名
-	Entity    interface{} // 非指针对象
-	ParseId   func(string) interface{}
+	Entity  app.Table // 非指针对象
+	ParseId func(string) interface{}
 }
 
 var AuthInfo Auth
@@ -39,7 +38,7 @@ func VerifyAuth(c *gin.Context) {
 		claims, err := ParseToken(token)
 		if err == nil {
 			var entity = reflect.New(reflect.TypeOf(AuthInfo.Entity))
-			err = mongo.Collection(AuthInfo.TableName).Where(bson.M{"_id": claims.Id}).FindOne(entity.Interface())
+			err = mongo.Collection(AuthInfo.Entity).Where(bson.M{"_id": claims.Id}).FindOne(entity.Interface())
 			loginAt := entity.Elem().FieldByName("LoginAt")
 			if err == nil && loginAt.IsValid() {
 				if loginAt.MapIndex(reflect.ValueOf(c.DefaultQuery("platform", "web"))).Interface() != claims.LoginAt {

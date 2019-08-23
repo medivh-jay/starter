@@ -22,8 +22,10 @@ const (
 
 type (
 	EntityTyp int
-	Managers  []ManagerInterface
-	Response  struct {
+	Managers  struct {
+		container []ManagerInterface
+	}
+	Response struct {
 		Data     interface{} `json:"data"`      // 数据集
 		AfterId  interface{} `json:"after_id"`  // 下一页,这个id为这一页最后一条id
 		BeforeId interface{} `json:"before_id"` // 上一页,这个id为这一页第一条id
@@ -39,24 +41,25 @@ type (
 		Delete(*gin.Context)
 		GetRoute() string
 		SetRoute(route string)
-		SetTableName(table string)
 		SetTableTyp(typ reflect.Type)
 		GetTableTyp() reflect.Type
+		GetTable() app.Table
+		SetTable(table app.Table)
 	}
 	MysqlManager struct {
-		TableName string
-		TableTyp  reflect.Type
-		Route     string
+		TableTyp reflect.Type
+		Route    string
+		Table    app.Table
 	}
 	MongoManager struct {
-		TableName string
-		TableTyp  reflect.Type
-		Route     string
+		TableTyp reflect.Type
+		Route    string
+		Table    app.Table
 	}
 	MgoManager struct {
-		TableName string
-		TableTyp  reflect.Type
-		Route     string
+		TableTyp reflect.Type
+		Route    string
+		Table    app.Table
 	}
 	Setup interface {
 		set(managerInterface ManagerInterface)
@@ -66,7 +69,13 @@ type (
 	}
 )
 
-var managers = make(Managers, 0)
+func New() *Managers {
+	return &Managers{
+		container: make([]ManagerInterface, 0),
+	}
+}
+
+//var managers = make(Managers, 0)
 
 // 返回一个新的默认管理器
 func (entityTyp EntityTyp) NewManager() ManagerInterface {
@@ -81,8 +90,9 @@ func (entityTyp EntityTyp) NewManager() ManagerInterface {
 	panic("entity type error")
 }
 
-func (r route) set(managerInterface ManagerInterface) { managerInterface.SetRoute(r.route) }
+// 设置自定义路由
 func SetRoute(r string) *route                        { return &route{r} }
+func (r route) set(managerInterface ManagerInterface) { managerInterface.SetRoute(r.route) }
 
 func newItems(manager ManagerInterface) reflect.Value {
 	newInstance := reflect.MakeSlice(reflect.SliceOf(manager.GetTableTyp()), 0, 0)
@@ -97,15 +107,18 @@ func (manager *MgoManager) GetRoute() string               { return manager.Rout
 func (manager *MysqlManager) SetRoute(route string)        { manager.Route = route }
 func (manager *MongoManager) SetRoute(route string)        { manager.Route = route }
 func (manager *MgoManager) SetRoute(route string)          { manager.Route = route }
-func (manager *MysqlManager) SetTableName(table string)    { manager.TableName = table }
-func (manager *MongoManager) SetTableName(table string)    { manager.TableName = table }
-func (manager *MgoManager) SetTableName(table string)      { manager.TableName = table }
 func (manager *MysqlManager) SetTableTyp(typ reflect.Type) { manager.TableTyp = typ }
 func (manager *MongoManager) SetTableTyp(typ reflect.Type) { manager.TableTyp = typ }
 func (manager *MgoManager) SetTableTyp(typ reflect.Type)   { manager.TableTyp = typ }
 func (manager *MysqlManager) GetTableTyp() reflect.Type    { return manager.TableTyp }
 func (manager *MongoManager) GetTableTyp() reflect.Type    { return manager.TableTyp }
 func (manager *MgoManager) GetTableTyp() reflect.Type      { return manager.TableTyp }
+func (manager *MysqlManager) GetTable() app.Table          { return manager.Table }
+func (manager *MongoManager) GetTable() app.Table          { return manager.Table }
+func (manager *MgoManager) GetTable() app.Table            { return manager.Table }
+func (manager *MysqlManager) SetTable(table app.Table)     { manager.Table = table }
+func (manager *MongoManager) SetTable(table app.Table)     { manager.Table = table }
+func (manager *MgoManager) SetTable(table app.Table)       { manager.Table = table }
 
 func NewResponse(data interface{}, code int) *Response {
 	var response = &Response{}
@@ -141,34 +154,34 @@ func (response *Response) SetMessage(ctx *gin.Context, message string) *Response
 	return response
 }
 
-func Start(engine *gin.Engine) {
-	for _, manager := range managers {
+func (managers *Managers) Start(router gin.IRoutes) {
+	for _, manager := range managers.container {
 		route := manager.GetRoute()
 		manage := manager
-		engine.GET(route+"/list", func(context *gin.Context) { manage.List(context) })
-		engine.POST(route, func(context *gin.Context) { manage.Post(context) })
-		engine.PUT(route, func(context *gin.Context) { manage.Put(context) })
-		engine.DELETE(route, func(context *gin.Context) { manage.Delete(context) })
+		router.GET(route+"/list", func(context *gin.Context) { manage.List(context) })
+		router.POST(route, func(context *gin.Context) { manage.Post(context) })
+		router.PUT(route, func(context *gin.Context) { manage.Put(context) })
+		router.DELETE(route, func(context *gin.Context) { manage.Delete(context) })
 	}
 }
 
-// 实例化一个新的默认管理器
-func Register(entity app.Table, entityTyp EntityTyp, setups ...Setup) Managers {
+// 注册一个管理器
+func (managers *Managers) Register(entity app.Table, entityTyp EntityTyp, setups ...Setup) *Managers {
 	manager := entityTyp.NewManager()
-	RegisterCustomManager(manager, entity, setups...)
+	managers.RegisterCustomManager(manager, entity, setups...)
 	return managers
 }
 
 // 自定义管理器
 // 可自己继承 MysqlManager 或者 MongoManager 然后重写方法实现自定义操作
-func RegisterCustomManager(manager ManagerInterface, entity app.Table, setups ...Setup) Managers {
+func (managers *Managers) RegisterCustomManager(manager ManagerInterface, entity app.Table, setups ...Setup) *Managers {
 	manager.SetRoute("/" + entity.TableName())
-	manager.SetTableName(entity.TableName())
 	manager.SetTableTyp(reflect.TypeOf(entity))
+	manager.SetTable(entity)
 	for _, set := range setups {
 		set.set(manager)
 	}
-	managers = append(managers, manager)
+	managers.container = append(managers.container, manager)
 	return managers
 }
 
@@ -192,11 +205,12 @@ func (manager *MysqlManager) List(ctx *gin.Context) {
 	var sorts = NewSorter(Mysql).Parse(ctx).(string)
 
 	// 查询
-	orm.Master().Table(manager.TableName).Where(statement, params...).Limit(query.Limit(ctx)).Offset(query.Offset(ctx)).Order(sorts).Find(items.Interface())
+	orm.Master().Table(manager.GetTable().TableName()).
+		Where(statement, params...).Limit(query.Limit(ctx)).Offset(query.Offset(ctx)).Order(sorts).Find(items.Interface())
 
 	// 返回数据
 	var response = NewResponse(items.Interface(), app.Success).SetPageId(items).SetRows(query.Limit(ctx))
-	orm.Master().Table(manager.TableName).Where(statement, params...).Count(&response.Count)
+	orm.Master().Table(manager.GetTable().TableName()).Where(statement, params...).Count(&response.Count)
 	response.SetMessage(ctx, "SUCCESS")
 	ctx.JSON(http.StatusOK, response)
 }
@@ -229,7 +243,8 @@ func (manager *MysqlManager) Put(ctx *gin.Context) {
 	var newInstance = reflect.New(manager.TableTyp)
 	validate := validator.Bind(ctx, newInstance.Interface())
 	if validate.IsValid() {
-		err := orm.Master().Table(manager.TableName).Model(newInstance.Interface()).Where("id = ?", id).Update(newInstance.Interface()).Error
+		err := orm.Master().Table(manager.GetTable().TableName()).
+			Model(newInstance.Interface()).Where("id = ?", id).Update(newInstance.Interface()).Error
 		if err != nil {
 			ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(ctx, "FAIL"))
 			return
@@ -250,7 +265,7 @@ func (manager *MysqlManager) Delete(ctx *gin.Context) {
 		return
 	}
 	var newInstance = reflect.New(manager.TableTyp)
-	err := orm.Master().Table(manager.TableName).Where("id = ?", id).Delete(newInstance.Interface()).Error
+	err := orm.Master().Table(manager.GetTable().TableName()).Where("id = ?", id).Delete(newInstance.Interface()).Error
 	if err != nil {
 		ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(ctx, "FAIL").SetCount(0))
 		return
@@ -267,10 +282,10 @@ func (manager *MongoManager) List(ctx *gin.Context) {
 	statement = mergeMongo(statement, parse.Parse().(bson.M))
 
 	sorts := NewSorter(Mongo).Parse(ctx).(bson.M)
-	mongo.Collection(manager.TableName).Where(statement).Limit(int64(query.Limit(ctx))).Skip(int64(query.Offset(ctx))).Sort(sorts).FindMany(items.Interface())
+	mongo.Collection(manager.GetTable()).Where(statement).Limit(int64(query.Limit(ctx))).Skip(int64(query.Offset(ctx))).Sort(sorts).FindMany(items.Interface())
 
 	var response = NewResponse(items.Interface(), app.Success).SetRows(query.Limit(ctx)).
-		SetCount(int(mongo.Collection(manager.TableName).Where(statement).Count())).SetPageId(items).SetMessage(ctx, "SUCCESS")
+		SetCount(int(mongo.Collection(manager.GetTable()).Where(statement).Count())).SetPageId(items).SetMessage(ctx, "SUCCESS")
 
 	ctx.JSON(http.StatusOK, response)
 }
@@ -279,12 +294,12 @@ func (manager *MongoManager) Post(ctx *gin.Context) {
 	var newInstance = reflect.New(manager.TableTyp)
 	validate := validator.Bind(ctx, newInstance.Interface())
 	if validate.IsValid() {
-		insertId := mongo.Collection(manager.TableName).InsertOne(newInstance.Interface())
+		insertId := mongo.Collection(manager.GetTable()).InsertOne(newInstance.Interface())
 		if insertId.InsertedID == nil {
 			ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(ctx, "FAIL"))
 			return
 		}
-		_ = mongo.Collection(manager.TableName).Where(bson.M{"_id": insertId.InsertedID}).FindOne(newInstance.Interface())
+		_ = mongo.Collection(manager.GetTable()).Where(bson.M{"_id": insertId.InsertedID}).FindOne(newInstance.Interface())
 		ctx.JSON(http.StatusOK, NewResponse(newInstance.Interface(), app.Success).SetMessage(ctx, "SUCCESS"))
 		return
 	}
@@ -302,7 +317,7 @@ func (manager *MongoManager) Put(ctx *gin.Context) {
 	if validate.IsValid() {
 		var query = &MongoQuery{entityTyp: manager.TableTyp}
 		newInstance.Elem().FieldByName("Id").Set(reflect.ValueOf(query.convertId(id)))
-		result := mongo.Collection(manager.TableName).Where(bson.M{"_id": query.convertId(id)}).UpdateOne(newInstance.Interface())
+		result := mongo.Collection(manager.GetTable()).Where(bson.M{"_id": query.convertId(id)}).UpdateOne(newInstance.Interface())
 		if result.ModifiedCount == 0 {
 			ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(ctx, "FAIL"))
 			return
@@ -320,7 +335,7 @@ func (manager *MongoManager) Delete(ctx *gin.Context) {
 		return
 	}
 	var query = &MongoQuery{entityTyp: manager.TableTyp}
-	count := mongo.Collection(manager.TableName).Where(bson.M{"_id": query.convertId(id)}).Delete()
+	count := mongo.Collection(manager.GetTable()).Where(bson.M{"_id": query.convertId(id)}).Delete()
 	if count == 0 {
 		ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(ctx, "FAIL").SetCount(int(count)))
 		return
@@ -332,7 +347,7 @@ func (manager *MgoManager) List(ctx *gin.Context) {
 	var query = MgoQuery{entityTyp: manager.TableTyp}
 	statement := query.GetQuery(ctx)
 	items := newItems(manager)
-	collection := mgo.Collection(manager.TableName)
+	collection := mgo.Collection(manager.GetTable())
 	defer collection.Close()
 
 	parse := ParseSectionParams(ctx, Mgo)
@@ -349,7 +364,7 @@ func (manager *MgoManager) List(ctx *gin.Context) {
 func (manager *MgoManager) Post(ctx *gin.Context) {
 	var newInstance = reflect.New(manager.TableTyp)
 	validate := validator.Bind(ctx, newInstance.Interface())
-	collection := mgo.Collection(manager.TableName)
+	collection := mgo.Collection(manager.GetTable())
 	defer collection.Close()
 	if validate.IsValid() {
 		insert, err := collection.InsertOne(newInstance.Interface())
@@ -372,7 +387,7 @@ func (manager *MgoManager) Put(ctx *gin.Context) {
 	}
 	var newInstance = reflect.New(manager.TableTyp)
 	validate := validator.Bind(ctx, newInstance.Interface())
-	collection := mgo.Collection(manager.TableName)
+	collection := mgo.Collection(manager.GetTable())
 	defer collection.Close()
 
 	if validate.IsValid() {
@@ -395,7 +410,7 @@ func (manager *MgoManager) Delete(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(ctx, "OperateIdCanNotBeNull"))
 		return
 	}
-	collection := mgo.Collection(manager.TableName)
+	collection := mgo.Collection(manager.GetTable())
 	defer collection.Close()
 	var query = &MgoQuery{entityTyp: manager.TableTyp}
 	result := collection.Where(mgoBson.M{"_id": query.convertId(id)}).Delete()

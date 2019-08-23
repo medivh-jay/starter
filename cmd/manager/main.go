@@ -5,7 +5,6 @@ import (
 	"log"
 	"starter/internal/entities"
 	"starter/internal/manager"
-	"starter/pkg/mgo"
 	"starter/pkg/middlewares"
 	"starter/pkg/server"
 	"time"
@@ -20,8 +19,7 @@ import (
 // @Router  /order [get]
 func main() {
 	server.Mode = "manager"
-	mgo.Start()
-	middlewares.AuthInfo = middlewares.Auth{TableName: "staffs", Entity: entities.Staff{}, ParseId: func(s string) interface{} {
+	middlewares.AuthInfo = middlewares.Auth{Entity: entities.Staff{}, ParseId: func(s string) interface{} {
 		id, _ := primitive.ObjectIDFromHex(s)
 		return id
 	}}

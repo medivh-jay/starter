@@ -42,7 +42,7 @@
     Admin.prototype.login = function (username, password) {
         // 登录逻辑
         console.log(this.api);
-        localStorage.setItem("jwt", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJJZCI6IjVkNGJjNDFhODBhMWNkNDAwYWU3MTVmNyIsIkxvZ2luQXQiOjEsImV4cCI6MTU2NjQ3OTEyN30.C4lTqT8sTs-RnjhjFSSyFIdvVabuo-XRwLTuSL0dz40");
+        localStorage.setItem("jwt", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJJZCI6IjVkNGJjNDFhODBhMWNkNDAwYWU3MTVmNyIsIkxvZ2luQXQiOjEsImV4cCI6MTU2NjU2MjkzNn0.qJEqqh0XPNStai2jPdVO2wAD2Fpir5hslgX0WblyQYU");
         location.href = "/main";
     };
 

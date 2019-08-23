@@ -13,6 +13,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
 	"reflect"
+	"starter/pkg/app"
 	"starter/pkg/config"
 	"time"
 )
@@ -53,11 +54,11 @@ func Start() {
 }
 
 // 得到一个mongo操作对象
-func Collection(table string) *collection {
+func Collection(table app.Table) *collection {
 	database := client.Database(config.Config.Mongo.Database)
 	return &collection{
 		Database: database,
-		Table:    database.Collection(table),
+		Table:    database.Collection(table.TableName()),
 		filter:   make(bson.M),
 	}
 }
