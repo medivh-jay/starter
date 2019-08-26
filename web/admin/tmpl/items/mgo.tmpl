@@ -32,7 +32,7 @@
 
     <script>
 
-        admin.renderList("/mgo", [[
+        let table = admin.newTable("mgo", [[
             {field: '_id', title: 'ID', sort: true, fixed: 'left'},
             {field: 'username', title: '用户名'},
             {field: 'created_at', title: '创建时间', sort: true, templet: admin.time2str},

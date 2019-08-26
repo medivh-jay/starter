@@ -35,7 +35,7 @@
         </form>
     </div>
 
-    <script src="../../static/js/admin.js"></script>
+    <script src="../../static/js/manager.js"></script>
     <script>
 
         $(function () {
@@ -43,7 +43,7 @@
                 let form = layui.form;
                 form.on('submit(login)', function (data) {
                     let admin = new Admin("http://manager.golang-project.com/");
-                    admin.login(data.field["username"], data.field["password"]);
+                    admin.login();
                     return false;
                 });
             });

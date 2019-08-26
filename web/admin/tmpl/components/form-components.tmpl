@@ -21,7 +21,27 @@
     <div class="layui-form-item">
         <label for="form-{{.name}}" class="layui-form-label">{{.title}}</label>
         <div class="layui-input-block textarea" name="{{.name}}">
-{{/*            <textarea class="textarea" name="{{.name}}"></textarea>*/}}
+            {{/*            <textarea class="textarea" name="{{.name}}"></textarea>*/}}
         </div>
     </div>
 {{ end }}
+
+{{ define "form-upload"}}
+    <div class="layui-form-item">
+        <label class="layui-form-label">{{.title}}</label>
+        <div class="" id="upload-file-{{.name}}"></div>
+        <button type="button" class="layui-btn form-upload" data-key="{{.name}}" data-multiple="{{.multiple}}"
+                id="form-upload-{{.name}}">
+            <i class="layui-icon">&#xe67c;</i>上传
+        </button>
+    </div>
+{{ end }}
+
+{{ define "form-radio"}}
+    <div class="layui-form-item radio-list" data-list="{{.data}}" data-name="{{.name}}" data-key="{{.key}}"
+         data-val="{{.val}}">
+        <label class="layui-form-label">{{.title}}</label>
+        <div class="layui-input-block" id="form-radio-{{.name}}">
+        </div>
+    </div>
+{{end}}

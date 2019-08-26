@@ -7,8 +7,11 @@
         {{ template "form-text" map `{"title":"用户名", "name": "username", "placeholder": "请输入用户登录账户名称", "verify": "required"}` }}
         {{ template "form-checkbox" map `{"title":"用户名(示例)", "name": "test_1", "data":"[{'_id':'111', 'name':'bbb'},{'_id':'222', 'name':'ccc'}]", "key":"_id", "val":"name"}` }}
         {{ template "form-checkbox" map `{"title":"用户名(示例)", "name": "test_2", "data":"[{'_id':'111', 'name':'bbb'},{'_id':'222', 'name':'ccc'}]", "key":"_id", "val":"name"}` }}
-        {{ template "form-checkbox" map `{"title":"用户名(示例)", "name": "test_3", "data":"/staffs/list?limit=10000", "key":"_id", "val":"username"}` }}
-        {{ template "form-textarea" map `{"title":"富文本示例", name":"textarea"}` }}
+        {{ template "form-checkbox" map `{"title":"关联用户(复选框示例)", "name": "relation_users", "data":"/staffs/list?limit=10000", "key":"_id", "val":"username"}` }}
+        {{ template "form-radio" map `{"title":"状态", "name": "status", "data":"[{'_id':-1, 'name':'禁用'},{'_id': 1, 'name':'启用'}]", "key":"_id", "val":"name"}` }}
+        {{ template "form-upload" map `{"title":"用户头像", "name": "avatar", "multiple": false}` }}
+        {{ template "form-upload" map `{"title":"图集", "name": "pictures", "multiple": true}` }}
+        {{ template "form-textarea" map `{"title":"富文本示例", "name":"description"}` }}
         {{ template "form-end" }}
 
         <div class="layui-row layui-col-space15">
@@ -16,14 +19,14 @@
                 <div class="layui-card">
                     {{template "/search-form-begin"}}
 
-                        {{template "search-date-pick" map `{"name":"created_at", "rg": "~", "placeholder": "选择创建时间范围"}`}}
-                        {{template "search-date-pick" map `{"name":"-updated_at", "placeholder": "最大更新时间"}`}}
-                        {{template "search-text" map `{"name":"username", "placeholder": "用户名"}`}}
+                    {{template "search-date-pick" map `{"name":"created_at", "rg": "~", "placeholder": "选择创建时间范围"}`}}
+                    {{template "search-date-pick" map `{"name":"-updated_at", "placeholder": "最大更新时间"}`}}
+                    {{template "search-text" map `{"name":"username", "placeholder": "用户名"}`}}
 
                     {{template "/search-form-end"}}
 
                     <div class="layui-card-header">
-                        <button class="layui-btn" onclick="admin.openForm()"><i class="layui-icon"></i>添加</button>
+                        <button class="layui-btn" onclick="(new admin.Form).open()"><i class="layui-icon"></i>添加</button>
                     </div>
                     {{template "/table"}}
                 </div>
@@ -31,14 +34,13 @@
         </div>
     </div>
 
-
     <script>
 
-        admin.renderList("/staffs", [[
+        let table = admin.newTable('staffs', [[
             {field: '_id', title: 'ID', sort: true, fixed: 'left'},
             {field: 'username', title: '用户名'},
-            {field: 'created_at', title: '创建时间', sort: true},
-            {field: 'updated_at', title: '最后更新时间'},
+            {field: 'created_at', title: '创建时间', sort: true, templet: admin.helper.time2str},
+            {field: 'updated_at', title: '最后更新时间', templet: admin.helper.time2str},
             {title: '操作', toolbar: '#curd'},
         ]]);
 
