@@ -2,13 +2,15 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log"
-	"reflect"
 	"starter/internal/entities"
 	"starter/internal/manager"
-	"starter/pkg/managers"
 	"starter/pkg/middlewares"
+	"starter/pkg/mongo"
+	"starter/pkg/password"
+	"starter/pkg/permission"
 	"starter/pkg/server"
 )
 
@@ -25,15 +27,29 @@ func main() {
 
 	// 在mongo连接上之后再操作
 	server.After = func(engine *gin.Engine) {
-		root, _ := primitive.ObjectIDFromHex("5d4bc41a80a1cd400ae715f7")
-		other, _ := primitive.ObjectIDFromHex("5d63b385790326f1bbd01317")
 
-		log.Println(middlewares.NewToken(entities.Staff{}.FindByTopic(root)))
-		log.Println(middlewares.NewToken(entities.Staff{}.FindByTopic(other)))
+		// 这里的操作可以自行完成, 写在这里只是为了方便开发
+		// 生成root用户
+		var staff = &entities.Staff{Username: "root", Password: password.Hash("123456")}
+		if mongo.Collection(staff).Where(bson.M{"username": "root"}).Count() == 0 {
+			staffResult := mongo.Collection(staff).InsertOne(staff)
+
+			// 生成总权限
+			var perm = &permission.Permission{Name: "所有权限", Path: "*", Method: "*"}
+			if mongo.Collection(perm).Where(bson.M{"path": "*", "method": "*"}).Count() == 0 {
+				permissionResult := mongo.Collection(perm).InsertOne(perm)
+
+				// 生成超级管理员角色
+				var role = &permission.Role{Name: "超级管理员", Permissions: []string{permissionResult.InsertedID.(primitive.ObjectID).Hex()}}
+				if mongo.Collection(role).Where(bson.M{"permission": permissionResult.InsertedID.(primitive.ObjectID).Hex()}).Count() == 0 {
+					roleResult := mongo.Collection(role).InsertOne(role)
+
+					var binding = &permission.Binding{UserId: staffResult.InsertedID.(primitive.ObjectID).Hex(), RoleId: roleResult.InsertedID.(primitive.ObjectID).Hex()}
+					log.Println(mongo.Collection(binding).InsertOne(binding))
+				}
+			}
+		}
 	}
-
-	var typ = reflect.New(reflect.TypeOf(entities.Staff{}))
-	log.Println(typ.Type().Implements(reflect.TypeOf((*managers.UpdateOrCreate)(nil)).Elem()))
 
 	server.Run(manager.GetEngine())
 }
