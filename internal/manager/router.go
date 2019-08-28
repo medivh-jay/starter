@@ -2,10 +2,12 @@ package manager
 
 import (
 	"github.com/gin-gonic/gin"
+	"log"
 	"starter/internal/entities"
 	"starter/internal/manager/controllers"
 	managerMiddleWares "starter/internal/manager/middlewares"
 	"starter/pkg/app"
+	"starter/pkg/captcha"
 	"starter/pkg/managers"
 	"starter/pkg/middlewares"
 	"starter/pkg/permission"
@@ -24,6 +26,16 @@ func GetEngine() *gin.Engine {
 
 	// 登录路由需要在jwt验证中间件之前
 	engine.POST("/login", controllers.Login)
+
+	engine.GET("/captcha", func(context *gin.Context) {
+		cpat := captcha.New("medivh")
+		app.NewResponse(app.Success, gin.H{"content": cpat.ToBase64EncodeString(), "captcha_id": cpat.CaptchaId}).End(context)
+	})
+
+	engine.POST("/captcha", func(context *gin.Context) {
+		id := context.DefaultQuery("captcha_id", "medivh")
+		log.Println(captcha.Verify(id, context.DefaultQuery("captcha", "")))
+	})
 
 	engine.Use(middlewares.VerifyAuth)
 	sessions.Start(engine)

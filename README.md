@@ -44,3 +44,4 @@
 - [swaggo](https://github.com/swaggo)
 - [mgo](https://gopkg.in/mgo.v2)
 - [wangEditor](http://www.wangeditor.com/index.html)
+- [mojocn/base64Captcha](github.com/mojocn/base64Captcha)

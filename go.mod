@@ -22,6 +22,7 @@ require (
 	github.com/jinzhu/gorm v1.9.10
 	github.com/json-iterator/go v1.1.6
 	github.com/leodido/go-urn v1.1.0 // indirect
+	github.com/mojocn/base64Captcha v0.0.0-20190801020520-752b1cd608b2
 	github.com/olivere/elastic/v7 v7.0.5
 	github.com/pkg/errors v0.8.1
 	github.com/sony/sonyflake v1.0.0

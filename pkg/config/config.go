@@ -54,6 +54,13 @@ type (
 		PoolSize     int    `toml:"pool_size"`
 		MinIdleConns int    `toml:"min_idle_conns"`
 	}
+	captcha struct {
+		Addr         string `toml:"addr"`
+		Password     string `toml:"password"`
+		Db           int    `toml:"db"`
+		PoolSize     int    `toml:"pool_size"`
+		MinIdleConns int    `toml:"min_idle_conns"`
+	}
 	sessions struct {
 		Key          string `toml:"key"`
 		Name         string `toml:"name"`
@@ -85,6 +92,7 @@ type config struct {
 	Database      database               `toml:"database"`
 	Mongo         mongo                  `toml:"mongo"`
 	Redis         redis                  `toml:"redis"`
+	Captcha       captcha                `toml:"captcha"`
 	Sessions      sessions               `toml:"sessions"`
 	ElasticSearch elasticsearch          `toml:"elastic"`
 }
