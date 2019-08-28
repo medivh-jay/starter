@@ -64,14 +64,14 @@
         {{/*        </ul>*/}}
         <ul class="layui-nav right" lay-filter="">
             <li class="layui-nav-item">
-                <a href="javascript:;">admin</a>
-                <dl class="layui-nav-child">
-                    <!-- 二级菜单 -->
-                    <dd>
-                        <a onclick="xadmin.open('个人信息','http://www.baidu.com')">个人信息</a></dd>
-                    <dd>
-                        <a onclick="xadmin.open('切换帐号','http://www.baidu.com')">切换帐号</a></dd>
-                </dl>
+                <a href="javascript:;" id="staff_name">admin</a>
+{{/*                <dl class="layui-nav-child">*/}}
+{{/*                    <!-- 二级菜单 -->*/}}
+{{/*                    <dd>*/}}
+{{/*                        <a onclick="xadmin.open('个人信息','http://www.baidu.com')">个人信息</a></dd>*/}}
+{{/*                    <dd>*/}}
+{{/*                        <a onclick="xadmin.open('切换帐号','http://www.baidu.com')">切换帐号</a></dd>*/}}
+{{/*                </dl>*/}}
             </li>
             <li class="layui-nav-item to-index">
                 <a href="javascript:void(null);" onclick="admin.logout()">退出</a></li>
@@ -106,40 +106,37 @@
                                 <i class="iconfont">&#xe6a7;</i>
                                 <cite>MGO驱动表</cite></a>
                         </li>
+                    </ul>
+                </li>
+                <li>
+                    <a href="javascript:;">
+                        <i class="iconfont left-nav-li" lay-tips="角色权限管理">&#xe6b8;</i>
+                        <cite>角色权限管理</cite>
+                        <i class="iconfont nav_right">&#xe697;</i></a>
+                    <ul class="sub-menu">
+                        <li>
+                            <a onclick="xadmin.add_tab('权限管理','permissions')">
+                                <i class="iconfont">&#xe6a7;</i>
+                                <cite>权限管理</cite></a>
+                        </li>
 
-                        {{/*                        <li>*/}}
-                        {{/*                            <a onclick="xadmin.add_tab('会员列表(静态表格)','member-list.html')">*/}}
-                        {{/*                                <i class="iconfont">&#xe6a7;</i>*/}}
-                        {{/*                                <cite>会员列表(静态表格)</cite></a>*/}}
-                        {{/*                        </li>*/}}
-                        {{/*                        <li>*/}}
-                        {{/*                            <a onclick="xadmin.add_tab('会员列表(动态表格)','member',true)">*/}}
-                        {{/*                                <i class="iconfont">&#xe6a7;</i>*/}}
-                        {{/*                                <cite>会员列表(动态表格)</cite></a>*/}}
-                        {{/*                        </li>*/}}
-                        {{/*                        <li>*/}}
-                        {{/*                            <a onclick="xadmin.add_tab('会员删除','member-del.html')">*/}}
-                        {{/*                                <i class="iconfont">&#xe6a7;</i>*/}}
-                        {{/*                                <cite>会员删除</cite></a>*/}}
-                        {{/*                        </li>*/}}
-                        {{/*                        <li>*/}}
-                        {{/*                            <a href="javascript:;">*/}}
-                        {{/*                                <i class="iconfont">&#xe70b;</i>*/}}
-                        {{/*                                <cite>会员管理</cite>*/}}
-                        {{/*                                <i class="iconfont nav_right">&#xe697;</i></a>*/}}
-                        {{/*                            <ul class="sub-menu">*/}}
-                        {{/*                                <li>*/}}
-                        {{/*                                    <a onclick="xadmin.add_tab('会员删除','member-del.html')">*/}}
-                        {{/*                                        <i class="iconfont">&#xe6a7;</i>*/}}
-                        {{/*                                        <cite>会员删除</cite></a>*/}}
-                        {{/*                                </li>*/}}
-                        {{/*                                <li>*/}}
-                        {{/*                                    <a onclick="xadmin.add_tab('等级管理','member-list1.html')">*/}}
-                        {{/*                                        <i class="iconfont">&#xe6a7;</i>*/}}
-                        {{/*                                        <cite>等级管理</cite></a>*/}}
-                        {{/*                                </li>*/}}
-                        {{/*                            </ul>*/}}
-                        {{/*                        </li>*/}}
+                        <li>
+                            <a onclick="xadmin.add_tab('角色管理','roles')">
+                                <i class="iconfont">&#xe6a7;</i>
+                                <cite>角色管理</cite></a>
+                        </li>
+
+                        <li>
+                            <a onclick="xadmin.add_tab('用户-角色绑定','binding')">
+                                <i class="iconfont">&#xe6a7;</i>
+                                <cite>用户-角色绑定</cite></a>
+                        </li>
+
+                        <li>
+                            <a onclick="xadmin.add_tab('用户管理','staffs')">
+                                <i class="iconfont">&#xe6a7;</i>
+                                <cite>用户管理</cite></a>
+                        </li>
                     </ul>
                 </li>
                 {{/*                <li>*/}}

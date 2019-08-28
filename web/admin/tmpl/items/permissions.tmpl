@@ -1,0 +1,47 @@
+{{define "/permissions"}}
+    {{template "/header"}}
+    {{template "/nav-bar" map `{"menu":"角色权限管理", "title":"权限管理"}`}}
+    <div class="layui-fluid">
+
+        {{ template "form-begin" }}
+        {{ template "form-text" map `{"title":"权限名称", "name": "name", "placeholder": "权限名称", "verify": "required"}` }}
+        {{ template "form-text" map `{"title":"资源路径", "name": "path", "placeholder": "资源路径", "verify": "required"}` }}
+        {{ template "form-text" map `{"title":"请求方式", "name": "method", "placeholder": "请求方式", "verify": "required"}` }}
+        {{ template "form-end" }}
+
+        <div class="layui-row layui-col-space15">
+            <div class="layui-col-md12">
+                <div class="layui-card">
+{{/*                    {{template "/search-form-begin"}}*/}}
+
+{{/*                    {{template "search-date-pick" map `{"name":"created_at", "rg": "~", "placeholder": "选择创建时间范围"}`}}*/}}
+{{/*                    {{template "search-date-pick" map `{"name":"-updated_at", "placeholder": "最大更新时间"}`}}*/}}
+{{/*                    {{template "search-text" map `{"name":"username", "placeholder": "用户名"}`}}*/}}
+
+{{/*                    {{template "/search-form-end"}}*/}}
+
+                    <div class="layui-card-header">
+                        <button class="layui-btn" onclick="(new admin.Form).open()"><i class="layui-icon"></i>添加</button>
+                    </div>
+                    {{template "/table"}}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        let table = admin.newTable('permissions', [[
+            {field: '_id', title: 'ID', sort: true, fixed: 'left'},
+            {field: 'name', title: '权限名称'},
+            {field: 'path', title: '资源路径'},
+            {field: 'method', title: '操作方式'},
+            {field: 'created_at', title: '创建时间', sort: true, templet: admin.helper.time2str},
+            {field: 'updated_at', title: '最后更新时间', templet: admin.helper.time2str},
+            {title: '操作', toolbar: '#curd'},
+        ]]);
+
+    </script>
+
+    {{template "/footer"}}
+{{end}}

@@ -7,6 +7,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"starter/pkg/middlewares"
 	"starter/pkg/mongo"
+	"starter/pkg/password"
 	"time"
 )
 
@@ -23,6 +24,17 @@ type Staff struct {
 	Status        int                `json:"status" bson:"status" form:"status"`
 	CreatedAt     int64              `json:"created_at" bson:"created_at"`
 	UpdatedAt     int64              `json:"updated_at" bson:"updated_at"`
+}
+
+func (staff *Staff) PreOperation() {
+	if staff.Password != "" {
+		staff.Password = password.Hash(staff.Password)
+	}
+}
+
+func (staff *Staff) Logged(platform string) {
+	staff.LoginAt[platform] = time.Now().Unix()
+	mongo.Collection(staff).UpdateOne(staff)
 }
 
 func (Staff) TableName() string {
@@ -63,5 +75,5 @@ func (staff Staff) Check(ctx *gin.Context, checkData string) bool {
 }
 
 func (Staff) ExpiredAt() int64 {
-	return time.Now().Add(1800 * time.Second).Unix()
+	return time.Now().Add(86400 * time.Second).Unix()
 }

@@ -12,41 +12,47 @@ import (
 
 type Role struct {
 	Id          primitive.ObjectID `json:"_id" bson:"_id"`
-	Name        string             `json:"name" bson:"name" form:"name" binding:"required,max=12"` // 角色名称
-	Pid         string             `json:"pid" bson:"pid" form:"pid"`                              // 角色的父级角色id
-	Permissions []string           `json:"permissions" bson:"permissions" form:"permissions[]"`    // 权限id列表
+	Name        string             `json:"name" bson:"name" form:"name" binding:"max=12"`       // 角色名称
+	Pid         string             `json:"pid" bson:"pid" form:"pid"`                           // 角色的父级角色id
+	Permissions []string           `json:"permissions" bson:"permissions" form:"permissions[]"` // 权限id列表
 	CreatedAt   int64              `json:"created_at" bson:"created_at"`
 	UpdatedAt   int64              `json:"updated_at" bson:"updated_at"`
 }
 
 type Permission struct {
 	Id         primitive.ObjectID  `json:"_id" bson:"_id"`
-	Name       string              `json:"name" bson:"name" binding:"required,max=24" form:"name"` // 权限名称
-	Path       string              `json:"path" bson:"path" binding:"required" form:"path"`        // 资源定位路径
-	Method     string              `json:"method" bson:"method" binding:"required" form:"method"`  // 请求方式
-	Filters    []map[string]string `json:"filters" bson:"filters" form:"filters[]"`                // 指定字段允许修改的值
-	NotAllowed []string            `json:"not_allowed" bson:"not_allowed" form:"not_allowed[]"`    // 直接不允许操作的字段
+	Name       string              `json:"name" bson:"name" binding:"max=24" form:"name"`       // 权限名称
+	Path       string              `json:"path" bson:"path" form:"path"`                        // 资源定位路径
+	Method     string              `json:"method" bson:"method" form:"method"`                  // 请求方式
+	Filters    []map[string]string `json:"filters" bson:"filters" form:"filters[]"`             // 指定字段允许修改的值
+	NotAllowed []string            `json:"not_allowed" bson:"not_allowed" form:"not_allowed[]"` // 直接不允许操作的字段
 	CreatedAt  int64               `json:"created_at" bson:"created_at"`
 	UpdatedAt  int64               `json:"updated_at" bson:"updated_at"`
 }
 
 type Binding struct {
 	Id        primitive.ObjectID `json:"_id" bson:"_id"`
-	UserId    string             `json:"user_id" bson:"user_id" form:"user_id" binding:"required"`
-	RoleId    string             `json:"role_id" bson:"role_id" form:"role_id" binding:"required"`
+	UserId    string             `json:"user_id" bson:"user_id" form:"user_id" `
+	RoleId    string             `json:"role_id" bson:"role_id" form:"role_id" `
 	CreatedAt int64              `json:"created_at" bson:"created_at"`
 	UpdatedAt int64              `json:"updated_at" bson:"updated_at"`
 }
 
-func Start() {
-	managers.Register("/permission/role", "roles", Role{}, managers.Mongo)
-	managers.Register("/permission/permissions", "permissions", Permission{}, managers.Mongo)
-	managers.Register("/permission/binding", "binding", Binding{}, managers.Mongo)
+func (Role) TableName() string       { return "roles" }
+func (Permission) TableName() string { return "permissions" }
+func (Binding) TableName() string    { return "binding" }
+
+func Start(router gin.IRoutes) {
+	managers.New().
+		Register(Role{}, managers.Mongo).
+		Register(Permission{}, managers.Mongo).
+		Register(Binding{}, managers.Mongo).
+		Start(router)
 }
 
 func GetPermissionsForUser(id string) []Permission {
 	var binding Binding
-	err := mongo.Collection("binding").Where(bson.M{"user_id": id}).FindOne(&binding)
+	err := mongo.Collection(binding).Where(bson.M{"user_id": id}).FindOne(&binding)
 	if err != nil {
 		log.Println(err)
 		return nil
@@ -54,7 +60,7 @@ func GetPermissionsForUser(id string) []Permission {
 
 	roleId, _ := primitive.ObjectIDFromHex(binding.RoleId)
 	var role Role
-	err = mongo.Collection("roles").Where(bson.M{"_id": roleId}).FindOne(&role)
+	err = mongo.Collection(role).Where(bson.M{"_id": roleId}).FindOne(&role)
 	if err != nil {
 		log.Println(err)
 		return nil
@@ -66,17 +72,18 @@ func GetPermissionsForUser(id string) []Permission {
 	}
 
 	var permissions []Permission
-	mongo.Collection("permissions").Where(bson.M{"_id": bson.M{"$in": permissionIdList}}).FindMany(&permissions)
+	mongo.Collection(Permission{}).Where(bson.M{"_id": bson.M{"$in": permissionIdList}}).FindMany(&permissions)
 
 	return permissions
 }
 
 // 是否是超级管理员
-func isRoot(id string, permissions ...[]Permission) bool {
-	var perm []Permission
+func isRoot(id string, permissions []Permission) bool {
+	var perm = permissions
 	if len(permissions) == 0 {
 		perm = GetPermissionsForUser(id)
 	}
+
 	for _, permission := range perm {
 		if permission.Path == "*" && permission.Method == "*" {
 			return permission.Filters == nil

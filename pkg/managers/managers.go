@@ -34,6 +34,9 @@ type (
 		Message  string      `json:"message"`
 		Code     int         `json:"code"`
 	}
+	UpdateOrCreate interface {
+		PreOperation()
+	}
 	ManagerInterface interface {
 		List(*gin.Context)
 		Post(*gin.Context)
@@ -74,6 +77,8 @@ func New() *Managers {
 		container: make([]ManagerInterface, 0),
 	}
 }
+
+var updateOrCreate = reflect.TypeOf((*UpdateOrCreate)(nil)).Elem()
 
 //var managers = make(Managers, 0)
 
@@ -158,10 +163,10 @@ func (managers *Managers) Start(router gin.IRoutes) {
 	for _, manager := range managers.container {
 		route := manager.GetRoute()
 		manage := manager
-		router.GET(route+"/list", func(context *gin.Context) { manage.List(context) })
-		router.POST(route, func(context *gin.Context) { manage.Post(context) })
-		router.PUT(route, func(context *gin.Context) { manage.Put(context) })
-		router.DELETE(route, func(context *gin.Context) { manage.Delete(context) })
+		router.GET(route+"/list", manage.List)
+		router.POST(route, manage.Post)
+		router.PUT(route, manage.Put)
+		router.DELETE(route, manage.Delete)
 	}
 }
 
@@ -220,6 +225,9 @@ func (manager *MysqlManager) Post(ctx *gin.Context) {
 	var newInstance = reflect.New(manager.TableTyp)
 	validate := validator.Bind(ctx, newInstance.Interface())
 	if validate.IsValid() {
+		if newInstance.Type().Implements(updateOrCreate) {
+			newInstance.Interface().(UpdateOrCreate).PreOperation()
+		}
 		err := orm.Master().Create(newInstance.Interface()).Error
 		if err != nil {
 			ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(ctx, "FAIL"))
@@ -243,6 +251,9 @@ func (manager *MysqlManager) Put(ctx *gin.Context) {
 	var newInstance = reflect.New(manager.TableTyp)
 	validate := validator.Bind(ctx, newInstance.Interface())
 	if validate.IsValid() {
+		if newInstance.Type().Implements(updateOrCreate) {
+			newInstance.Interface().(UpdateOrCreate).PreOperation()
+		}
 		err := orm.Master().Table(manager.GetTable().TableName()).
 			Model(newInstance.Interface()).Where("id = ?", id).Update(newInstance.Interface()).Error
 		if err != nil {
@@ -294,6 +305,9 @@ func (manager *MongoManager) Post(ctx *gin.Context) {
 	var newInstance = reflect.New(manager.TableTyp)
 	validate := validator.Bind(ctx, newInstance.Interface())
 	if validate.IsValid() {
+		if newInstance.Type().Implements(updateOrCreate) {
+			newInstance.Interface().(UpdateOrCreate).PreOperation()
+		}
 		insertId := mongo.Collection(manager.GetTable()).InsertOne(newInstance.Interface())
 		if insertId.InsertedID == nil {
 			ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(ctx, "FAIL"))
@@ -317,6 +331,9 @@ func (manager *MongoManager) Put(ctx *gin.Context) {
 	if validate.IsValid() {
 		var query = &MongoQuery{entityTyp: manager.TableTyp}
 		newInstance.Elem().FieldByName("Id").Set(reflect.ValueOf(query.convertId(id)))
+		if newInstance.Type().Implements(updateOrCreate) {
+			newInstance.Interface().(UpdateOrCreate).PreOperation()
+		}
 		result := mongo.Collection(manager.GetTable()).Where(bson.M{"_id": query.convertId(id)}).UpdateOne(newInstance.Interface())
 		if result.ModifiedCount == 0 {
 			ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(ctx, "FAIL"))
@@ -367,6 +384,9 @@ func (manager *MgoManager) Post(ctx *gin.Context) {
 	collection := mgo.Collection(manager.GetTable())
 	defer collection.Close()
 	if validate.IsValid() {
+		if newInstance.Type().Implements(updateOrCreate) {
+			newInstance.Interface().(UpdateOrCreate).PreOperation()
+		}
 		insert, err := collection.InsertOne(newInstance.Interface())
 		if err != nil {
 			ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(ctx, "FAIL"))
@@ -393,6 +413,9 @@ func (manager *MgoManager) Put(ctx *gin.Context) {
 	if validate.IsValid() {
 		var query = &MgoQuery{entityTyp: manager.TableTyp}
 		newInstance.Elem().FieldByName("Id").Set(reflect.ValueOf(query.convertId(id)))
+		if newInstance.Type().Implements(updateOrCreate) {
+			newInstance.Interface().(UpdateOrCreate).PreOperation()
+		}
 		result := collection.Where(mgoBson.M{"_id": query.convertId(id)}).UpdateOne(newInstance.Interface())
 		if !result {
 			ctx.JSON(http.StatusOK, NewResponse(nil, app.Fail).SetMessage(ctx, "FAIL"))

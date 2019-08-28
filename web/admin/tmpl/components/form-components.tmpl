@@ -45,3 +45,14 @@
         </div>
     </div>
 {{end}}
+
+{{define "form-select"}}
+    <div class="layui-form-item select-list" data-list="{{.data}}" data-name="{{.name}}" data-key="{{.key}}"
+         data-val="{{.val}}">
+        <label class="layui-form-label">{{.title}}</label>
+        <div class="layui-input-block">
+            <select name="{{.name}}" lay-verify="" id="form-{{.name}}">
+            </select>
+        </div>
+    </div>
+{{end}}

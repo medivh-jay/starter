@@ -1,0 +1,45 @@
+{{define "/binding"}}
+    {{template "/header"}}
+    {{template "/nav-bar" map `{"menu":"角色权限管理", "title":"权限管理"}`}}
+    <div class="layui-fluid">
+
+        {{ template "form-begin" }}
+        {{ template "form-select" map `{"title":"用户id", "name": "user_id", "data":"/staffs/list?limit=100000", "key":"_id", "val":"username"}` }}
+        {{ template "form-select" map `{"title":"角色", "name": "role_id", "data":"/roles/list?limit=100000", "key":"_id", "val":"name"}` }}
+        {{ template "form-end" }}
+
+        <div class="layui-row layui-col-space15">
+            <div class="layui-col-md12">
+                <div class="layui-card">
+{{/*                    {{template "/search-form-begin"}}*/}}
+
+{{/*                    {{template "search-date-pick" map `{"name":"created_at", "rg": "~", "placeholder": "选择创建时间范围"}`}}*/}}
+{{/*                    {{template "search-date-pick" map `{"name":"-updated_at", "placeholder": "最大更新时间"}`}}*/}}
+{{/*                    {{template "search-text" map `{"name":"username", "placeholder": "用户名"}`}}*/}}
+
+{{/*                    {{template "/search-form-end"}}*/}}
+
+                    <div class="layui-card-header">
+                        <button class="layui-btn" onclick="(new admin.Form).open()"><i class="layui-icon"></i>添加</button>
+                    </div>
+                    {{template "/table"}}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        let table = admin.newTable('binding', [[
+            {field: '_id', title: 'ID', sort: true, fixed: 'left'},
+            {field: 'user_id', title: '用户'},
+            {field: 'role_id', title: '权限'},
+            {field: 'created_at', title: '创建时间', sort: true, templet: admin.helper.time2str},
+            {field: 'updated_at', title: '最后更新时间', templet: admin.helper.time2str},
+            {title: '操作', toolbar: '#curd'},
+        ]]);
+
+    </script>
+
+    {{template "/footer"}}
+{{end}}

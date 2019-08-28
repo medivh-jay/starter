@@ -9,18 +9,28 @@
         xhrFields: {withCredentials: true},
         complete: function (XMLHttpRequest, textStatus) {
 
-            if (XMLHttpRequest.status === 500) {
-                layer.msg('服务器内部错误');
+            switch (XMLHttpRequest.status) {
+                case 500:
+                    layer.msg('服务器内部错误');
+                    break;
+                case 403:
+                    layer.msg('你没有权限');
+                    break;
             }
 
-            if (XMLHttpRequest.responseJSON.code === 401) {
-                layer.msg(XMLHttpRequest.responseJSON.message, function () {
-                    if (window !== top) {
-                        top.location.href = '/login';
-                    } else {
-                        location.href = '/login';
-                    }
-                })
+            switch (XMLHttpRequest.responseJSON.code) {
+                case 401:
+                    layer.msg(XMLHttpRequest.responseJSON.message, function () {
+                        if (window !== top) {
+                            top.location.href = '/login';
+                        } else {
+                            location.href = '/login';
+                        }
+                    });
+                    break;
+                case 403:
+                    layer.msg('无权限');
+                    break;
             }
         }
     });
@@ -76,12 +86,40 @@
             return table;
         };
 
+        this.staffInfo = function () {
+            let staffInfo = {};
+            if ( location.pathname === '/main' ) {
+                $.ajax({
+                    url: admin.api + '/staffs/info',
+                    method: 'get',
+                    success: function (data) {
+                        staffInfo = data;
+                        $('#staff_name').text(data.data.username);
+                    }
+                });
+            }
+            return staffInfo;
+        }();
+
         this.login = function () {
             let form = layui.form;
             form.on('submit(login)', function (data) {
-                console.log(data.field["username"], data.field["password"]);
-                localStorage.setItem("jwt", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJJZCI6IjVkNGJjNDFhODBhMWNkNDAwYWU3MTVmNyIsIkNoZWNrRGF0YSI6IntcIndlYlwiOjJ9IiwiZXhwIjoxNTY2ODA5NTA2fQ.L2rugS24FNXIJ73cHTc-VaSZsCx60r7FPbOSddFU0_o");
-                location.href = "/main";
+                $.ajax({
+                    url: admin.api + "/login",
+                    method: 'post',
+                    data: data.field,
+                    success: function (data) {
+                        if (data.message.length > 0) {
+                            layer.msg(data.message)
+                        } else {
+                            localStorage.setItem("jwt", data.data.token);
+                            location.href = "/main";
+                        }
+                    },
+                    error: function (data) {
+                        console.log(data);
+                    }
+                });
                 return false;
             });
         };
@@ -163,6 +201,8 @@
                     type: 1,
                     shade: false,
                     maxmin: true,
+                    offset: 'lt',
+                    maxHeight: 500,
                     title: "编辑/添加",
                     content: document.getElementById('edit-form').innerHTML,
                     zIndex: layer.zIndex,
@@ -181,6 +221,7 @@
                         return false;
                     });
                     form.checkbox();
+                    form.select();
                     form.radio();
                     form.richText();
                     form.upload(upload);
@@ -208,9 +249,11 @@
                                 $('input[value="' + vals + '"]').attr("checked", true);
                             }
                             break;
+                        case 'select':
+                            break;
                         case 'upload':
                             let val = data[form.fields[i].name];
-                            if ( val === null || val === "" )
+                            if (val === null || val === "")
                                 break;
                             if (Array.isArray(val)) {
                                 for (let index = 0; index < val.length; index++) {
@@ -268,6 +311,44 @@
                                         name: '' + name + '',
                                         val: data.data[i][key],
                                         type: 'checkbox'
+                                    });
+                                }
+                            }
+                        });
+                    }
+                }
+            };
+
+            /**
+             * 复选框数据生成
+             */
+            this.select = function () {
+                let checkboxes = document.getElementsByClassName('select-list');
+                for (let index = 0; index < checkboxes.length; index++) {
+                    let element = checkboxes[index];
+                    let data = element.getAttribute('data-list'), name = element.getAttribute('data-name'),
+                        key = element.getAttribute('data-key'), val = element.getAttribute('data-val'),
+                        input = document.getElementById('form-' + name);
+
+                    try {
+                        // 将字符串作为
+                        let json = eval(data);
+                        for (let i = 0; i < json.length; i++) {
+                            input.innerHTML += '<option value="' + json[i][key] + '">' + json[i][val] + '</option>>';
+                            this.fields.push({name: '' + name + '', val: json[i][key], type: 'select'});
+                        }
+                    } catch (e) {
+                        console.log('是数据地址, 将从api服务器获取数据');
+                        layui.$.ajax({
+                            url: admin.api + data,
+                            async: false,
+                            success: function (data) {
+                                for (let i = 0; i < data.data.length; i++) {
+                                    input.innerHTML += '<option value="' + data.data[i][key] + '">' + data.data[i][val] + '</option>';
+                                    form.fields.push({
+                                        name: '' + name + '',
+                                        val: data.data[i][key],
+                                        type: 'select'
                                     });
                                 }
                             }

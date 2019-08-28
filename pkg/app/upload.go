@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"starter/pkg/unique"
 	"strconv"
@@ -16,6 +17,39 @@ import (
 type fileTypeMap struct {
 	TypeMap sync.Map
 	sync.Once
+}
+
+type SaveHandler interface {
+	// 保存文件并返回文件最终路径
+	Save(file *multipart.FileHeader, fileName string) string
+}
+
+// 默认文件保存器
+type DefaultSaveHandler struct {
+	prefix  string
+	dst     string
+	context *gin.Context
+}
+
+func (defaultSaveHandler *DefaultSaveHandler) SetDst(dst string) *DefaultSaveHandler {
+	defaultSaveHandler.dst = dst
+	return defaultSaveHandler
+}
+
+func (defaultSaveHandler *DefaultSaveHandler) SetPrefix(prefix string) *DefaultSaveHandler {
+	defaultSaveHandler.prefix = prefix
+	return defaultSaveHandler
+}
+
+func (defaultSaveHandler *DefaultSaveHandler) Save(file *multipart.FileHeader, fileName string) string {
+	filePath := defaultSaveHandler.dst + fileName
+	err := defaultSaveHandler.context.SaveUploadedFile(file, filePath)
+	if err != nil {
+		log.Println(err)
+		return ""
+	} else {
+		return defaultSaveHandler.prefix + filePath
+	}
 }
 
 var FileType = new(fileTypeMap)
@@ -121,7 +155,7 @@ func (fileTypeMap *fileTypeMap) GetFileType(fSrc []byte) string {
 // 文件上传公共方法
 //  key 上传文件的表单name, 如果是多文件需要加上中括号[]
 //  dst 存放路径 注意:无论这里传什么路径, 最后边都会追加 filename.xxx
-func Upload(key, dst, prefix string, allowedTyp ...string) gin.HandlerFunc {
+func Upload(key string, saveHandler SaveHandler, allowedTyp ...string) gin.HandlerFunc {
 	return func(context *gin.Context) {
 		form, _ := context.MultipartForm()
 		files := form.File[key]
@@ -144,13 +178,14 @@ func Upload(key, dst, prefix string, allowedTyp ...string) gin.HandlerFunc {
 						typAllow = typAllow || typ == fileType
 					}
 					if typAllow {
-						filePath := dst + strconv.Itoa(int(unique.Id())) + "." + fileType
-						err := context.SaveUploadedFile(file, filePath)
-						if err != nil {
-							log.Println(err)
-						} else {
-							data[formKey] = append(data[formKey], prefix+filePath)
-						}
+						fileName := strconv.Itoa(int(unique.Id())) + "." + fileType
+						data[formKey] = append(data[formKey], saveHandler.Save(file, fileName))
+						//err := context.SaveUploadedFile(file, filePath)
+						//if err != nil {
+						//	log.Println(err)
+						//} else {
+						//	data[formKey] = append(data[formKey], prefix+filePath)
+						//}
 					}
 
 				}

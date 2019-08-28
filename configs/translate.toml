@@ -16,3 +16,6 @@ en-us="form expired, please refresh"
 [AuthFailed]
 zh-cn="认证失败"
 en-us="auth failed"
+[PermissionDenied]
+zh-cn="无权限"
+en-us="permission denied"
