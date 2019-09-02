@@ -6,13 +6,12 @@ import (
 	"github.com/facebookgo/grace/gracehttp"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	"log"
 	"net/http"
 	"os"
 	"starter/pkg/app"
 	"starter/pkg/config"
 	"starter/pkg/elastic"
-	starterLog "starter/pkg/log"
+	"starter/pkg/log"
 	"starter/pkg/mgo"
 	"starter/pkg/mongo"
 	"starter/pkg/orm"
@@ -33,7 +32,7 @@ func init() {
 
 // 启动各项服务
 func start() {
-	starterLog.Start()
+	log.Start()
 
 	orm.Start()
 	mongo.Start()
@@ -60,7 +59,7 @@ func Run(engine *gin.Engine) {
 	}
 
 	_ = gracehttp.ServeWithOptions([]*http.Server{createServer(engine)}, gracehttp.PreStartProcess(func() error {
-		log.Println("unlock pid")
+		log.Logger.Println("unlock pid")
 		lock.UnLock()
 		return nil
 	}))
@@ -85,12 +84,12 @@ func createServer(engine *gin.Engine) *http.Server {
 func createPid() *app.Flock {
 	pidLock, pidLockErr := app.FLock(pidFile)
 	if pidLockErr != nil {
-		log.Fatalln("createPid: lock error", pidLockErr)
+		log.Logger.Fatalln("createPid: lock error", pidLockErr)
 	}
 
 	err := pidLock.WriteTo(fmt.Sprintf(`%d`, os.Getpid()))
 	if err != nil {
-		log.Fatalln("write error: ", err)
+		log.Logger.Fatalln("write error: ", err)
 	}
 	return pidLock
 }

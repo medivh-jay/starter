@@ -22,9 +22,11 @@ require (
 	github.com/jinzhu/gorm v1.9.10
 	github.com/json-iterator/go v1.1.6
 	github.com/leodido/go-urn v1.1.0 // indirect
+	github.com/medivh-jay/eslogrus v0.0.0-20190902160611-87cc21dbdf30
 	github.com/mojocn/base64Captcha v0.0.0-20190801020520-752b1cd608b2
-	github.com/olivere/elastic/v7 v7.0.5
+	github.com/olivere/elastic/v7 v7.0.6
 	github.com/pkg/errors v0.8.1
+	github.com/sirupsen/logrus v1.4.2
 	github.com/sony/sonyflake v1.0.0
 	github.com/swaggo/files v0.0.0-20190704085106-630677cd5c14
 	github.com/swaggo/gin-swagger v1.2.0

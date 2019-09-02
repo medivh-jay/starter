@@ -20,7 +20,7 @@
   [database.master]
     addr = "127.0.0.1:3306"
     username = "root"
-    password = "password"
+    password = "123456"
     dbname = "starter"
     max_idle = 100
     max_open = 100
@@ -29,8 +29,8 @@
   [[database.slave]]
     addr = "127.0.0.1:3306"
     username = "root"
-    password = "password"
-    dbname = "kof"
+    password = "123456"
+    dbname = "starter"
     max_idle = 100
     max_open = 100
 

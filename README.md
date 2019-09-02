@@ -5,6 +5,7 @@
 - 基本做到下载, 定义表, 定义控制器, 定义路由, 一键CURD, 做一个快乐的CURD boy
 - 直接下载本项目就行
 - 修改 module name 为自己的
+- 基本需求  mysql  和 mongo 是必须的, 可以使用 docker 安装
 - 在使用时可按自己需要全盘修改所有内容,毕竟每个人的需求都不同
 - 工具做了一些配置管理, 如果设置 gin.Mode 为 release 的话, 将会读取 configs/application.toml 为配置文件, 否则就是 development.toml
 
@@ -45,3 +46,4 @@
 - [mgo](https://gopkg.in/mgo.v2)
 - [wangEditor](http://www.wangeditor.com/index.html)
 - [mojocn/base64Captcha](github.com/mojocn/base64Captcha)
+- [elogrus](https://github.com/sohlich/elogrus)
