@@ -20,14 +20,13 @@ func Start() {
 }
 
 // 获取指定key的值,如果值不存在,就执行f方法将返回值存入redis
-func Get(key string, expiration time.Duration, f func() interface{}) interface{} {
+func Get(key string, expiration time.Duration, f func() string) string {
 	cmd := Client.Get(key)
-	var val interface{}
-	if cmd.Err() != nil {
-		val = f()
-		Client.Set(key, val, expiration)
+	var val string
+	result, _ := cmd.Result()
+	if len(result) == 0 {
+		Client.Set(key, f(), expiration)
 		return val
 	}
-
-	return cmd.Val()
+	return result
 }

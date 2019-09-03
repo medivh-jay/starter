@@ -6,7 +6,10 @@ import (
 	"github.com/facebookgo/grace/gracehttp"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
+	"github.com/sirupsen/logrus"
+	"net"
 	"net/http"
+	"net/http/httputil"
 	"os"
 	"starter/pkg/app"
 	"starter/pkg/config"
@@ -17,6 +20,8 @@ import (
 	"starter/pkg/orm"
 	"starter/pkg/redis"
 	"starter/pkg/validator"
+	"strings"
+	"time"
 )
 
 var (
@@ -24,6 +29,7 @@ var (
 	Mode        string
 	After       func(engine *gin.Engine) // 在各项服务启动之后会执行的操作
 	swagHandler gin.HandlerFunc
+	engine      = gin.New()
 )
 
 func init() {
@@ -33,7 +39,6 @@ func init() {
 // 启动各项服务
 func start() {
 	log.Start()
-
 	orm.Start()
 	mongo.Start()
 	mgo.Start()
@@ -45,11 +50,15 @@ func start() {
 }
 
 // 启动服务
-func Run(engine *gin.Engine) {
+func Run(service func(engine *gin.Engine)) {
 	lock := createPid()
 	defer lock.UnLock()
 
 	start()
+	app.Logger().Info("server started at:", time.Now().String())
+	engine.Use(logger, recovery)
+	service(engine)
+
 	if swagHandler != nil && gin.Mode() != gin.ReleaseMode {
 		engine.GET("/doc/*any", swagHandler)
 	}
@@ -59,7 +68,7 @@ func Run(engine *gin.Engine) {
 	}
 
 	_ = gracehttp.ServeWithOptions([]*http.Server{createServer(engine)}, gracehttp.PreStartProcess(func() error {
-		log.Logger.Println("unlock pid")
+		app.Logger().Println("unlock pid")
 		lock.UnLock()
 		return nil
 	}))
@@ -84,12 +93,74 @@ func createServer(engine *gin.Engine) *http.Server {
 func createPid() *app.Flock {
 	pidLock, pidLockErr := app.FLock(pidFile)
 	if pidLockErr != nil {
-		log.Logger.Fatalln("createPid: lock error", pidLockErr)
+		app.Logger().Fatalln("createPid: lock error", pidLockErr)
 	}
 
 	err := pidLock.WriteTo(fmt.Sprintf(`%d`, os.Getpid()))
 	if err != nil {
-		log.Logger.Fatalln("write error: ", err)
+		app.Logger().Fatalln("write error: ", err)
 	}
 	return pidLock
+}
+
+// 自定义的GIN日志处理中间件
+// 可能在终端输出时看起来比较的难看
+func logger(ctx *gin.Context) {
+	start := time.Now()
+	path := ctx.Request.URL.Path
+	raw := ctx.Request.URL.RawQuery
+
+	ctx.Next()
+
+	if raw != "" {
+		path = path + "?" + raw
+	}
+
+	var params = make(logrus.Fields)
+	params["latency"] = time.Now().Sub(start)
+	params["path"] = path
+	params["method"] = ctx.Request.Method
+	params["status"] = ctx.Writer.Status()
+	params["body_size"] = ctx.Writer.Size()
+	params["client_ip"] = ctx.ClientIP()
+	params["user_agent"] = ctx.Request.UserAgent()
+	if !gin.IsDebugging() {
+		// 在正式环境将上下文传递的变量也进行记录, 方便分析
+		params["keys"] = ctx.Keys
+	}
+	app.Logger().WithFields(params).Info()
+}
+
+func recovery(ctx *gin.Context) {
+	defer func() {
+		if err := recover(); err != nil {
+			var brokenPipe bool
+			if ne, ok := err.(*net.OpError); ok {
+				if se, ok := ne.Err.(*os.SyscallError); ok {
+					if strings.Contains(strings.ToLower(se.Error()), "broken pipe") || strings.Contains(strings.ToLower(se.Error()), "connection reset by peer") {
+						brokenPipe = true
+					}
+				}
+			}
+			stack := app.Stack(3)
+			httpRequest, _ := httputil.DumpRequest(ctx.Request, false)
+
+			if gin.IsDebugging() {
+				app.Logger().Error(string(httpRequest))
+				for i := 0; i < len(stack); i++ {
+					app.Logger().WithFields(logrus.Fields{"func": stack[i]["func"], "source": stack[i]["source"]}).Error(fmt.Sprintf("%s:%d", stack[i]["file"], stack[i]["line"]))
+				}
+			} else {
+				app.Logger().WithField("stack", stack).WithField("request", string(httpRequest)).Error()
+			}
+
+			if brokenPipe {
+				_ = ctx.Error(err.(error))
+				ctx.Abort()
+			} else {
+				ctx.AbortWithStatus(http.StatusInternalServerError)
+			}
+		}
+	}()
+	ctx.Next()
 }

@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"github.com/gin-gonic/gin"
 	"io/ioutil"
-	"log"
 	"mime/multipart"
 	"net/http"
 	"starter/pkg/unique"
@@ -45,7 +44,7 @@ func (defaultSaveHandler *DefaultSaveHandler) Save(file *multipart.FileHeader, f
 	filePath := defaultSaveHandler.dst + fileName
 	err := defaultSaveHandler.context.SaveUploadedFile(file, filePath)
 	if err != nil {
-		log.Println(err)
+		Logger().Println(err)
 		return ""
 	} else {
 		return defaultSaveHandler.prefix + filePath

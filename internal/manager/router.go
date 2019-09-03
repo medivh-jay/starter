@@ -2,22 +2,19 @@ package manager
 
 import (
 	"github.com/gin-gonic/gin"
-	"log"
 	"starter/internal/entities"
 	"starter/internal/manager/controllers"
 	managerMiddleWares "starter/internal/manager/middlewares"
 	"starter/pkg/app"
 	"starter/pkg/captcha"
+	"starter/pkg/log"
 	"starter/pkg/managers"
 	"starter/pkg/middlewares"
 	"starter/pkg/permission"
 	"starter/pkg/sessions"
 )
 
-var engine = gin.Default()
-
-func GetEngine() *gin.Engine {
-
+func GetEngine(engine *gin.Engine) {
 	// 静态资源路径, 这里只是临时写了一个文件夹作为示例
 	engine.Static("/test", "./test")
 
@@ -34,7 +31,7 @@ func GetEngine() *gin.Engine {
 
 	engine.POST("/captcha", func(context *gin.Context) {
 		id := context.DefaultQuery("captcha_id", "medivh")
-		log.Println(captcha.Verify(id, context.DefaultQuery("captcha", "")))
+		log.Logger.Error(captcha.Verify(id, context.DefaultQuery("captcha", "")))
 	})
 
 	engine.Use(middlewares.VerifyAuth)
@@ -61,6 +58,4 @@ func GetEngine() *gin.Engine {
 
 	// 将权限验证数据表的CURD接口进行注册
 	permission.Start(engine)
-
-	return engine
 }

@@ -3,7 +3,6 @@ package mgo
 import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"log"
 	"reflect"
 	"starter/pkg/app"
 	"starter/pkg/config"
@@ -37,7 +36,7 @@ func Start() {
 	var err error
 	db, err = mgo.DialWithInfo(dialInfo)
 	if err != nil {
-		log.Fatalln(err)
+		app.Logger().Error(err)
 	}
 	db.SetMode(mgo.Monotonic, true)
 }
@@ -94,7 +93,7 @@ func (collection *collection) InsertOne(document interface{}) (interface{}, erro
 	data := BeforeCreate(document)
 	err := collection.Table.Insert(data)
 	if err != nil {
-		log.Println(err)
+		app.Logger().Error(err)
 	}
 	return data, err
 }
@@ -105,7 +104,7 @@ func (collection *collection) InsertMany(documents interface{}) interface{} {
 	data = BeforeCreate(documents).([]interface{})
 	err := collection.Table.Insert(data)
 	if err != nil {
-		log.Println(err)
+		app.Logger().Error(err)
 	}
 	return data
 }
@@ -114,7 +113,7 @@ func (collection *collection) InsertMany(documents interface{}) interface{} {
 func (collection *collection) UpdateOrInsert(document interface{}) *mgo.ChangeInfo {
 	result, err := collection.Table.Upsert(collection.filter, document)
 	if err != nil {
-		log.Println(err)
+		app.Logger().Error(err)
 	}
 	return result
 }
@@ -123,7 +122,7 @@ func (collection *collection) UpdateOrInsert(document interface{}) *mgo.ChangeIn
 func (collection *collection) UpdateOne(document interface{}) bool {
 	err := collection.Table.Update(collection.filter, bson.M{"$set": BeforeUpdate(document)})
 	if err != nil {
-		log.Println(err)
+		app.Logger().Error(err)
 	}
 	return err == nil
 }
@@ -132,7 +131,7 @@ func (collection *collection) UpdateOne(document interface{}) bool {
 func (collection *collection) UpdateMany(document interface{}) *mgo.ChangeInfo {
 	result, err := collection.Table.UpdateAll(collection.filter, bson.M{"$set": BeforeUpdate(document)})
 	if err != nil {
-		log.Println(err)
+		app.Logger().Error(err)
 	}
 	return result
 }
@@ -141,7 +140,7 @@ func (collection *collection) UpdateMany(document interface{}) *mgo.ChangeInfo {
 func (collection *collection) FindOne(document interface{}) error {
 	err := collection.Table.Find(collection.filter).Select(collection.fields).One(document)
 	if err != nil {
-		log.Println(err)
+		app.Logger().Error(err)
 		return err
 	}
 	return nil
@@ -151,19 +150,19 @@ func (collection *collection) FindOne(document interface{}) error {
 func (collection *collection) FindMany(documents interface{}) {
 	err := collection.Table.Find(collection.filter).Skip(collection.skip).Limit(collection.limit).Sort(collection.sort...).Select(collection.fields).All(documents)
 	if err != nil {
-		log.Println(err)
+		app.Logger().Error(err)
 	}
 }
 
 // 删除数据,并返回删除成功的数量
 func (collection *collection) Delete() bool {
 	if collection.filter == nil || len(collection.filter) == 0 {
-		log.Println("you can't delete all documents, it's very dangerous")
+		app.Logger().Error("you can't delete all documents, it's very dangerous")
 		return false
 	}
 	err := collection.Table.Remove(collection.filter)
 	if err != nil {
-		log.Println(err)
+		app.Logger().Error(err)
 	}
 	return err == nil
 }
@@ -171,7 +170,7 @@ func (collection *collection) Delete() bool {
 func (collection *collection) Count() int64 {
 	count, err := collection.Table.Find(collection.filter).Count()
 	if err != nil {
-		log.Println(err)
+		app.Logger().Error(err)
 		return 0
 	}
 	return int64(count)

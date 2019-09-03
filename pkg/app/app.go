@@ -1,12 +1,16 @@
+// 提供全局公用依赖性极低操作
+//  不要尝试写入复杂操作逻辑到这里, 可能会引起令人头疼的循环调用问题
 package app
 
 import (
 	"crypto/md5"
 	"encoding/hex"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 	"path/filepath"
+	"starter/pkg/log"
 )
 
 // 数据表结构体必须实现此接口
@@ -70,4 +74,9 @@ func Md5(text string) string {
 	ctx := md5.New()
 	ctx.Write([]byte(text))
 	return hex.EncodeToString(ctx.Sum(nil))
+}
+
+// 获取log对象, 避免全包各处导入造成的循环调用
+func Logger() *logrus.Logger {
+	return log.Logger
 }

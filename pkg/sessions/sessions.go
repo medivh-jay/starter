@@ -4,8 +4,8 @@ import (
 	"github.com/gin-contrib/sessions"
 	redisSession "github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
-	"log"
 	"starter/pkg/config"
+	"starter/pkg/log"
 	"strconv"
 )
 
@@ -13,7 +13,7 @@ func Start(engine *gin.Engine) {
 	conf := config.Config.Sessions
 	store, err := redisSession.NewStoreWithDB(conf.PoolSize, "tcp", conf.Addr, conf.Password, strconv.Itoa(conf.Db), []byte(conf.Key))
 	if err != nil {
-		log.Fatalln(err)
+		log.Logger.Error(err)
 	}
 
 	store.Options(sessions.Options{MaxAge: 3600, Path: "/", Domain: conf.Domain, HttpOnly: true})

@@ -47,3 +47,4 @@
 - [wangEditor](http://www.wangeditor.com/index.html)
 - [mojocn/base64Captcha](github.com/mojocn/base64Captcha)
 - [elogrus](https://github.com/sohlich/elogrus)
+- [rifflock/lfshook](https://github.com/rifflock/lfshook)

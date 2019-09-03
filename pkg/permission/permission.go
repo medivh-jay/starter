@@ -4,8 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"log"
 	"net/http"
+	"starter/pkg/app"
 	"starter/pkg/managers"
 	"starter/pkg/mongo"
 )
@@ -54,7 +54,7 @@ func GetPermissionsForUser(id string) []Permission {
 	var binding Binding
 	err := mongo.Collection(binding).Where(bson.M{"user_id": id}).FindOne(&binding)
 	if err != nil {
-		log.Println(err)
+		app.Logger().Error(err)
 		return nil
 	}
 
@@ -62,7 +62,7 @@ func GetPermissionsForUser(id string) []Permission {
 	var role Role
 	err = mongo.Collection(role).Where(bson.M{"_id": roleId}).FindOne(&role)
 	if err != nil {
-		log.Println(err)
+		app.Logger().Error(err)
 		return nil
 	}
 

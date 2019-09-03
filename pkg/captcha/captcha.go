@@ -3,7 +3,7 @@ package captcha
 import (
 	"github.com/go-redis/redis"
 	"github.com/mojocn/base64Captcha"
-	"log"
+	"starter/pkg/app"
 	"starter/pkg/config"
 	"sync"
 	"time"
@@ -90,7 +90,7 @@ func (s *customizeRdsStore) Set(id string, value string) {
 	s.lazyLoad()
 	err := s.redisClient.Set(id, value, time.Minute*10).Err()
 	if err != nil {
-		log.Println(err)
+		app.Logger().Error(err)
 	}
 }
 
@@ -98,13 +98,13 @@ func (s *customizeRdsStore) Get(id string, clear bool) string {
 	s.lazyLoad()
 	val, err := s.redisClient.Get(id).Result()
 	if err != nil {
-		log.Println(err)
+		app.Logger().Error(err)
 		return ""
 	}
 	if clear {
 		err := s.redisClient.Del(id).Err()
 		if err != nil {
-			log.Println(err)
+			app.Logger().Error(err)
 			return ""
 		}
 	}

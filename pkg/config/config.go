@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 	elastic "github.com/olivere/elastic/v7/config"
 	"log"
-	"starter/pkg/app"
 )
 
 type (
@@ -84,6 +83,11 @@ type (
 		ErrorLog    string `toml:"error_log"`
 		TraceLog    string `toml:"trace_log"`
 	}
+	logs struct {
+		Es    bool   `toml:"es"`
+		Index string `toml:"index"`
+		Dir   string `toml:"dir"`
+	}
 )
 
 // 配置顶级结构
@@ -95,6 +99,7 @@ type config struct {
 	Captcha       captcha                `toml:"captcha"`
 	Sessions      sessions               `toml:"sessions"`
 	ElasticSearch elasticsearch          `toml:"elastic"`
+	Logs          logs                   `toml:"log"`
 }
 
 // 三方支付配置信息
@@ -127,11 +132,11 @@ func Load() {
 }
 
 func configFile() string {
-	if app.Mode() == gin.ReleaseMode {
-		return app.Root() + "/configs/application.toml"
+	if gin.Mode() == gin.ReleaseMode {
+		return "./configs/application.toml"
 	}
 
-	return app.Root() + "/configs/development.toml"
+	return "./configs/development.toml"
 }
 
 func loadConfig() {
@@ -139,7 +144,7 @@ func loadConfig() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	_, err = toml.DecodeFile(app.Root()+"/configs/payments.toml", &Payment)
+	_, err = toml.DecodeFile("./configs/payments.toml", &Payment)
 	if err != nil {
 		log.Fatalln(err)
 	}

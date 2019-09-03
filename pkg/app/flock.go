@@ -23,7 +23,7 @@ type Flock struct {
 func FLock(file string) (*Flock, error) {
 	f, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
-		log.Println("lock: open file error ", err)
+		Logger().Println("lock: open file error ", err)
 		return nil, canNotOpenFile
 	}
 
@@ -57,6 +57,6 @@ func (lock *Flock) WriteTo(body string) error {
 
 // 解锁, 将同时删除锁文件
 func (lock *Flock) UnLock() {
-	lock.f.Close()
+	_ = lock.f.Close()
 	_ = os.Remove(lock.file)
 }

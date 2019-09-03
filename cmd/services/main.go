@@ -16,5 +16,5 @@ func main() {
 	server.After = func(engine *gin.Engine) {
 		log.Println(permission.GetPermissionsForUser("10001"))
 	}
-	server.Run(services.GetEngine())
+	server.Run(services.GetEngine)
 }

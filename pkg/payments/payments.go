@@ -1,8 +1,8 @@
 package payments
 
 import (
-	"log"
 	"net/http"
+	"starter/pkg/app"
 	"sync"
 )
 
@@ -21,7 +21,6 @@ var (
 )
 
 type Payment interface {
-
 	/* 对渠道商创建一笔支付订单 */
 	/* 参数 */
 	/*   id: 发起充值时声称的订单ID */
@@ -78,6 +77,6 @@ func Get(name string) Payment {
 	if driver, ok := drivers[name]; ok {
 		return driver
 	}
-	log.Println("payment: driver does not exists")
+	app.Logger().Error("payment: driver does not exists")
 	return nil
 }

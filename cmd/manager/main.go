@@ -4,9 +4,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"log"
 	"starter/internal/entities"
 	"starter/internal/manager"
+	"starter/pkg/log"
 	"starter/pkg/middlewares"
 	"starter/pkg/mongo"
 	"starter/pkg/password"
@@ -45,11 +45,11 @@ func main() {
 					roleResult := mongo.Collection(role).InsertOne(role)
 
 					var binding = &permission.Binding{UserId: staffResult.InsertedID.(primitive.ObjectID).Hex(), RoleId: roleResult.InsertedID.(primitive.ObjectID).Hex()}
-					log.Println(mongo.Collection(binding).InsertOne(binding))
+					log.Logger.Error(mongo.Collection(binding).InsertOne(binding))
 				}
 			}
 		}
 	}
 
-	server.Run(manager.GetEngine())
+	server.Run(manager.GetEngine)
 }

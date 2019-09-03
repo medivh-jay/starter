@@ -2,7 +2,7 @@ package password
 
 import (
 	"golang.org/x/crypto/bcrypt"
-	"log"
+	"starter/pkg/app"
 	"starter/pkg/config"
 	"starter/pkg/server"
 )
@@ -13,7 +13,7 @@ var passwordToken = config.Config.Application[server.Mode].PasswordToken
 func Hash(password string) string {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(passwordToken+password), bcrypt.DefaultCost)
 	if err != nil {
-		log.Println(err)
+		app.Logger().Error(err)
 		return ""
 	}
 

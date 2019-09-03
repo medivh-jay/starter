@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"log"
+	"starter/pkg/app"
 	"starter/pkg/config"
 	"starter/pkg/unique"
 	"sync/atomic"
@@ -38,8 +38,8 @@ func Start() {
 
 	orm.Master, err = gorm.Open("mysql", createConnectionUrl(master.Username, master.Password, master.Addr, master.DbName))
 	if err != nil {
-		log.Println("database connect error, you can't use orm support")
-		log.Println(err)
+		app.Logger().Warn("database connect error, you can't use orm support")
+		app.Logger().Warn(err)
 	}
 	orm.Master.LogMode(true)
 	orm.Master.DB().SetMaxIdleConns(database.Master.MaxIdle)
@@ -48,8 +48,8 @@ func Start() {
 	for _, slave := range database.Slaves {
 		connect, err := gorm.Open("mysql", createConnectionUrl(slave.Username, slave.Password, slave.Addr, slave.DbName))
 		if err != nil {
-			log.Println("database connect error, you can't use orm support")
-			log.Println(err)
+			app.Logger().Warn("database connect error, you can't use orm support")
+			app.Logger().Warn(err)
 		}
 		orm.Slaves = append(orm.Slaves, connect)
 	}
