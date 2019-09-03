@@ -2,7 +2,6 @@ package log
 
 import (
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
-	"github.com/medivh-jay/eslogrus"
 	"github.com/medivh-jay/lfshook"
 	"github.com/olivere/elastic/v7"
 	"github.com/sirupsen/logrus"
@@ -30,7 +29,7 @@ func startEsLog() {
 		hostname = "development"
 	}
 
-	hook, err := eslogrus.NewAsyncElasticHook(client, hostname, logrus.DebugLevel, conf.Index)
+	hook, err := NewAsyncElasticHook(client, hostname, logrus.DebugLevel, conf.Index)
 	if err != nil {
 		Terminal.Panic(err)
 	}

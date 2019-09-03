@@ -6,7 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"starter/internal/entities"
 	"starter/internal/manager"
-	"starter/pkg/log"
+	"starter/pkg/app"
 	"starter/pkg/middlewares"
 	"starter/pkg/mongo"
 	"starter/pkg/password"
@@ -45,7 +45,7 @@ func main() {
 					roleResult := mongo.Collection(role).InsertOne(role)
 
 					var binding = &permission.Binding{UserId: staffResult.InsertedID.(primitive.ObjectID).Hex(), RoleId: roleResult.InsertedID.(primitive.ObjectID).Hex()}
-					log.Logger.Error(mongo.Collection(binding).InsertOne(binding))
+					app.Logger().Debug(mongo.Collection(binding).InsertOne(binding))
 				}
 			}
 		}

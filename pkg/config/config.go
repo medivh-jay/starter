@@ -98,7 +98,7 @@ type config struct {
 	Redis         redis                  `toml:"redis"`
 	Captcha       captcha                `toml:"captcha"`
 	Sessions      sessions               `toml:"sessions"`
-	ElasticSearch elasticsearch          `toml:"elastic"`
+	ElasticSearch elasticsearch          `toml:"elasticsearch"`
 	Logs          logs                   `toml:"log"`
 }
 

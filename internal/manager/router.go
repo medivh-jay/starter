@@ -7,7 +7,6 @@ import (
 	managerMiddleWares "starter/internal/manager/middlewares"
 	"starter/pkg/app"
 	"starter/pkg/captcha"
-	"starter/pkg/log"
 	"starter/pkg/managers"
 	"starter/pkg/middlewares"
 	"starter/pkg/permission"
@@ -31,7 +30,7 @@ func GetEngine(engine *gin.Engine) {
 
 	engine.POST("/captcha", func(context *gin.Context) {
 		id := context.DefaultQuery("captcha_id", "medivh")
-		log.Logger.Error(captcha.Verify(id, context.DefaultQuery("captcha", "")))
+		app.Logger().Debug(captcha.Verify(id, context.DefaultQuery("captcha", "")))
 	})
 
 	engine.Use(middlewares.VerifyAuth)

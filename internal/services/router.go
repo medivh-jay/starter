@@ -2,8 +2,8 @@ package services
 
 import (
 	"github.com/gin-gonic/gin"
-	"log"
 	"starter/internal/services/controllers/order"
+	"starter/pkg/app"
 	"starter/pkg/middlewares"
 	"starter/pkg/permission"
 )
@@ -17,6 +17,6 @@ func GetEngine(engine *gin.Engine) {
 	permission.Start(engine)
 
 	engine.Any("/permission/test", func(context *gin.Context) {
-		log.Println(permission.HasPermission("10001", context))
+		app.Logger().Debug(permission.HasPermission("10001", context))
 	})
 }

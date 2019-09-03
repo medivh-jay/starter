@@ -32,12 +32,10 @@ var (
 	engine      = gin.New()
 )
 
-func init() {
-	config.Load()
-}
-
 // 启动各项服务
 func start() {
+	config.Load()
+
 	log.Start()
 	orm.Start()
 	mongo.Start()

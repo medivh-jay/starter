@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"github.com/gin-gonic/gin"
-	"log"
+	"starter/pkg/app"
 	"starter/pkg/managers"
 )
 
@@ -11,6 +11,6 @@ type CustomOrder struct {
 }
 
 func (custom *CustomOrder) List(ctx *gin.Context) {
-	log.Println("called this method")
+	app.Logger().Println("called this method")
 	custom.MysqlManager.List(ctx)
 }

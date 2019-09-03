@@ -76,10 +76,10 @@
   replicas = 0
   sniff = false
   health = false
-  info_log ="./elastic_info.log"
-  error_log ="./elastic_error.log"
-  trace_log ="./elastic_trace.log"
-  url ="http://192.168.1.163:9200"
+  info_log ="./logs/elastic_info.log"
+  error_log ="./logs/elastic_error.log"
+  trace_log ="./logs/elastic_trace.log"
+  url ="http://127.0.0.1:9200"
   username = ""
   password = ""
 

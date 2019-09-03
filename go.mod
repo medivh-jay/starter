@@ -43,6 +43,7 @@ require (
 	github.com/xdg/stringprep v1.0.0 // indirect
 	go.mongodb.org/mongo-driver v1.0.4
 	golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4
+	golang.org/x/tools v0.0.0-20190611222205-d73e1c7e250b
 	gopkg.in/go-playground/validator.v9 v9.29.1
 	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce
 )
