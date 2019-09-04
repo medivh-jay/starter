@@ -3,11 +3,15 @@
 - 本项目是一个整合了一些基础开发工具并稍微封装了一些日常操作的工具整合
 - 可以使用它进行正常的开发而不必要去一个个重新装go库，重新组织结构
 - 基本做到下载, 定义表, 定义控制器, 定义路由, 一键CURD, 做一个快乐的CURD boy
-- 直接下载本项目就行
-- 修改 module name 为自己的
 - 基本需求  mysql  和 mongo 是必须的, 可以使用 docker 安装
 - 在使用时可按自己需要全盘修改所有内容,毕竟每个人的需求都不同
 - 工具做了一些配置管理, configs 配置文件目录下氛围  debug, release 和 test , 分别对应 gin 的三个mode, 指定不同的mode将加载不同目录下的配置
+
+#### 快速安装
+```bash
+go get github.com/medivh-jay/gocreator
+gocreator -m 你预备的mod名
+```
 
 ##### 下边是一些使用到的库
 - 路由使用了gin
