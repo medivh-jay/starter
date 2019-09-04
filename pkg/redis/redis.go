@@ -2,14 +2,25 @@ package redis
 
 import (
 	"github.com/go-redis/redis"
-	"starter/pkg/config"
+	"starter/pkg/app"
 	"time"
 )
 
-var Client *redis.Client
+type config struct {
+	Addr         string `toml:"addr"`
+	Password     string `toml:"password"`
+	Db           int    `toml:"db"`
+	PoolSize     int    `toml:"pool_size"`
+	MinIdleConns int    `toml:"min_idle_conns"`
+}
+
+var (
+	Client *redis.Client
+	conf   config
+)
 
 func Start() {
-	conf := config.Config.Redis
+	_ = app.Config().Bind("application", "redis", &conf)
 	Client = redis.NewClient(&redis.Options{
 		Addr:         conf.Addr,
 		Password:     conf.Password,

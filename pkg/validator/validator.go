@@ -1,7 +1,6 @@
 package validator
 
 import (
-	"github.com/BurntSushi/toml"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/locales/en"
@@ -23,7 +22,7 @@ var (
 	_                   binding.StructValidator = &Validator{}
 	validatorMessages   map[string]map[string]string
 	langMapping         = map[string]string{"zh-cn": "zh", "en-us": "en"}
-	_, _                = toml.DecodeFile(app.Root()+"/configs/validator-messages.toml", &validatorMessages)
+	_                   = app.Config().Bind("validator-messages", "", &validatorMessages)
 	enUs                = en.New()
 	zhCn                = zh.New()
 	universalTranslator = ut.New(enUs, enUs, zhCn)

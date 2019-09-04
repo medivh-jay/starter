@@ -3,11 +3,10 @@ package password
 import (
 	"golang.org/x/crypto/bcrypt"
 	"starter/pkg/app"
-	"starter/pkg/config"
 	"starter/pkg/server"
 )
 
-var passwordToken = config.Config.Application[server.Mode].PasswordToken
+var passwordToken = server.Modes[server.Mode].PasswordToken
 
 // 密码hash
 func Hash(password string) string {

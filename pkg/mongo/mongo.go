@@ -13,35 +13,47 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"reflect"
 	"starter/pkg/app"
-	"starter/pkg/config"
 	"time"
 )
 
 var (
 	client *mongo.Client
+	conf   config
 )
 
-type collection struct {
-	Database *mongo.Database
-	Table    *mongo.Collection
-	filter   bson.M
-	limit    int64
-	skip     int64
-	sort     bson.M
-	fields   bson.M
-}
+type (
+	collection struct {
+		Database *mongo.Database
+		Table    *mongo.Collection
+		filter   bson.M
+		limit    int64
+		skip     int64
+		sort     bson.M
+		fields   bson.M
+	}
+
+	config struct {
+		Url             string `toml:"url"`
+		Database        string `toml:"database"`
+		MaxConnIdleTime int    `toml:"max_conn_idle_time"`
+		MaxPoolSize     int    `toml:"max_pool_size"`
+		Username        string `toml:"username"`
+		Password        string `toml:"password"`
+	}
+)
 
 // 启动 mongo
 func Start() {
+	_ = app.Config().Bind("application", "mongo", &conf)
 	var err error
 	mongoOptions := options.Client()
-	mongoOptions.SetMaxConnIdleTime(time.Duration(config.Config.Mongo.MaxConnIdleTime) * time.Second)
-	mongoOptions.SetMaxPoolSize(uint16(config.Config.Mongo.MaxPoolSize))
-	if config.Config.Mongo.Username != "" && config.Config.Mongo.Password != "" {
-		mongoOptions.SetAuth(options.Credential{Username: config.Config.Mongo.Username, Password: config.Config.Mongo.Password})
+	mongoOptions.SetMaxConnIdleTime(time.Duration(conf.MaxConnIdleTime) * time.Second)
+	mongoOptions.SetMaxPoolSize(uint16(conf.MaxPoolSize))
+	if conf.Username != "" && conf.Password != "" {
+		mongoOptions.SetAuth(options.Credential{Username: conf.Username, Password: conf.Password})
 	}
 
-	client, err = mongo.NewClient(mongoOptions.ApplyURI(config.Config.Mongo.Url))
+	client, err = mongo.NewClient(mongoOptions.ApplyURI(conf.Url))
 	if err != nil {
 		app.Logger().Error(err)
 	}
@@ -54,7 +66,7 @@ func Start() {
 
 // 得到一个mongo操作对象
 func Collection(table app.Table) *collection {
-	database := client.Database(config.Config.Mongo.Database)
+	database := client.Database(conf.Database)
 	return &collection{
 		Database: database,
 		Table:    database.Collection(table.TableName()),

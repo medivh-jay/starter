@@ -6,7 +6,6 @@ import (
 	"github.com/pkg/errors"
 	"net/http"
 	"starter/pkg/app"
-	"starter/pkg/config"
 	"starter/pkg/server"
 )
 
@@ -73,7 +72,7 @@ func newClaims(entity AuthInterface) claims {
 
 func NewToken(entity AuthInterface) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, newClaims(entity))
-	rs, err := token.SignedString([]byte(config.Config.Application[server.Mode].JwtToken))
+	rs, err := token.SignedString([]byte(server.Modes[server.Mode].JwtToken))
 	if err != nil {
 		return "", err
 	}
@@ -82,7 +81,7 @@ func NewToken(entity AuthInterface) (string, error) {
 
 func ParseToken(sign string) (*claims, error) {
 	token, err := jwt.ParseWithClaims(sign, &claims{}, func(token *jwt.Token) (i interface{}, e error) {
-		return []byte(config.Config.Application[server.Mode].JwtToken), nil
+		return []byte(server.Modes[server.Mode].JwtToken), nil
 	})
 
 	if err != nil {

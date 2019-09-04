@@ -5,27 +5,45 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"starter/pkg/app"
-	"starter/pkg/config"
 	"starter/pkg/unique"
 	"sync/atomic"
 	"time"
 )
 
-type Orm struct {
-	Master *gorm.DB
-	Slaves []*gorm.DB
-}
+type (
+	Orm struct {
+		Master *gorm.DB
+		Slaves []*gorm.DB
+	}
 
-type Database struct {
-	Id        uint64 `gorm:"primary_key;column:id;" json:"id"`
-	CreatedAt int    `gorm:"column:created_at;index:created_at" json:"created_at"`
-	UpdatedAt int    `gorm:"column:updated_at;index:updated_at" json:"updated_at"`
-}
+	Database struct {
+		Id        uint64 `gorm:"primary_key;column:id;" json:"id"`
+		CreatedAt int    `gorm:"column:created_at;index:created_at" json:"created_at"`
+		UpdatedAt int    `gorm:"column:updated_at;index:updated_at" json:"updated_at"`
+	}
 
-var orm = &Orm{}
-var slavesLen int
-var err error
-var cursor int64 = 0
+	connInfo struct {
+		Addr     string `toml:"addr"`
+		Username string `toml:"username"`
+		Password string `toml:"password"`
+		DbName   string `toml:"dbname"`
+		MaxIdle  int    `toml:"max_idle"`
+		MaxOpen  int    `toml:"max_open"`
+	}
+
+	config struct {
+		Master connInfo   `toml:"master"`
+		Slaves []connInfo `toml:"slave"`
+	}
+)
+
+var (
+	orm       = &Orm{}
+	slavesLen int
+	err       error
+	cursor    int64 = 0
+	conf      config
+)
 
 func createConnectionUrl(username, password, addr, dbName string) string {
 	return fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8&parseTime=True&loc=Local", username, password, addr, dbName)
@@ -33,19 +51,17 @@ func createConnectionUrl(username, password, addr, dbName string) string {
 
 // 启动数据库
 func Start() {
-	database := config.Config.Database
-	master := database.Master
-
-	orm.Master, err = gorm.Open("mysql", createConnectionUrl(master.Username, master.Password, master.Addr, master.DbName))
+	_ = app.Config().Bind("application", "database", &conf)
+	orm.Master, err = gorm.Open("mysql", createConnectionUrl(conf.Master.Username, conf.Master.Password, conf.Master.Addr, conf.Master.DbName))
 	if err != nil {
 		app.Logger().Warn("database connect error, you can't use orm support")
 		app.Logger().Warn(err)
 	}
 	orm.Master.LogMode(true)
-	orm.Master.DB().SetMaxIdleConns(database.Master.MaxIdle)
-	orm.Master.DB().SetMaxOpenConns(database.Master.MaxOpen)
+	orm.Master.DB().SetMaxIdleConns(conf.Master.MaxIdle)
+	orm.Master.DB().SetMaxOpenConns(conf.Master.MaxOpen)
 
-	for _, slave := range database.Slaves {
+	for _, slave := range conf.Slaves {
 		connect, err := gorm.Open("mysql", createConnectionUrl(slave.Username, slave.Password, slave.Addr, slave.DbName))
 		if err != nil {
 			app.Logger().Warn("database connect error, you can't use orm support")

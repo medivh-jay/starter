@@ -4,7 +4,6 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/mojocn/base64Captcha"
 	"starter/pkg/app"
-	"starter/pkg/config"
 	"sync"
 	"time"
 )
@@ -18,12 +17,25 @@ var Config = base64Captcha.ConfigDigit{
 	CaptchaLen: 6,
 }
 
-var store = new(customizeRdsStore)
+var (
+	store = new(customizeRdsStore)
+	conf  config
+)
 
-type customizeRdsStore struct {
-	redisClient *redis.Client
-	sync.Once
-}
+type (
+	customizeRdsStore struct {
+		redisClient *redis.Client
+		sync.Once
+	}
+
+	config struct {
+		Addr         string `toml:"addr"`
+		Password     string `toml:"password"`
+		Db           int    `toml:"db"`
+		PoolSize     int    `toml:"pool_size"`
+		MinIdleConns int    `toml:"min_idle_conns"`
+	}
+)
 
 type captcha struct {
 	CaptchaId string
@@ -74,7 +86,7 @@ func Verify(id, value string) bool {
 
 func (s *customizeRdsStore) lazyLoad() {
 	s.Once.Do(func() {
-		conf := config.Config.Captcha
+		_ = app.Config().Bind("application", "captcha", &conf)
 		store.redisClient = redis.NewClient(&redis.Options{
 			Addr:         conf.Addr,
 			Password:     conf.Password,

@@ -1,0 +1,92 @@
+[application]
+  [application.admin]
+    addr = ":22224"
+  [application.services]
+    domain = ".golang-project.com"
+    addr = ":22222"
+    name = "application"
+    password_token = "golang-project"
+    jwt-token = "MIICWwIBAAKBgQCraRwunSw1bMXeGL908hnY6mVbWzp2nlIq3o6UKYd+uYcquX0Q\nGQrLU41LLdUYiM6RwNO8X+Z4RZPUWwgmHU5GfYk48u0oBW39qq8RlaMILgVY2PoV\nZeiEHPeL6e0NjYLyGWhPgrDqba8jUrWSjBXvQHhmfYUoBWDk/6jWesnGYQIDAQAB\nAoGASj+JeZeTYsDvJLlLlXiZQaCmrt/hfygtJ2yoDf2/N2Fd71/RkHuIdXKHrZz4\nxVvdPr1r+hkAV/CrjDyyVvAyyxhEzGu2GTlSxRKuu59vP+UQVK2ssc5DOnouwcj3\n3owQo+ZWczcyqjyerC5dHeLN6yDdE/OBRq3rM7lAVgG4xAECQQDbER96fxgmHmwH\nx8FWmezwGhE57Ava2EC7PEHCZngZokFbbAnU/7Z9vm+cbyaHcLsiqoWa9H9hPSv/\n28B4besxAkEAyE8m66fpkcsFMlNvbbjs4xa69ctq8iWTKMytLGFl+6iQNvwBc8fF\nT+sjxu2vAPfBBeMLjWzR6hC78/gXCWdiMQJAGwgu4TfDrBh+7irZEa2mzi35SDN3\ndwbOXgxedPWeBlO+SuC3CeCQDU4tiZkxoO7pOKrgF7Hp8f7Rah4czv+JUQJAKFz6\nxMXDJSO52lhBveRjp6bu6ZSh6kV0D+aehrDhsgJXfRzu1fvNYLtLLEy81P8XoC4O\nJ+NjsTzKAvFdAwIYIQJANcXbQytDxQSQDf81ouovW0vXdk0USH/gWhB1w9bIReNF\nTB+r9XOMCG8a6cK9QVseJjoEXA/lG+cP2vWbmkZ+PQ=="
+
+  [application.manager]
+    domain = "localhost"
+    addr = ":22223"
+    name = "application"
+    password_token = "golang-project"
+    jwt-token = "MIICWwIBAAKBgQCraRwunSw1bMXeGL908hnY6mVbWzp2nlIq3o6UKYd+uYcquX0Q\nGQrLU41LLdUYiM6RwNO8X+Z4RZPUWwgmHU5GfYk48u0oBW39qq8RlaMILgVY2PoV\nZeiEHPeL6e0NjYLyGWhPgrDqba8jUrWSjBXvQHhmfYUoBWDk/6jWesnGYQIDAQAB\nAoGASj+JeZeTYsDvJLlLlXiZQaCmrt/hfygtJ2yoDf2/N2Fd71/RkHuIdXKHrZz4\nxVvdPr1r+hkAV/CrjDyyVvAyyxhEzGu2GTlSxRKuu59vP+UQVK2ssc5DOnouwcj3\n3owQo+ZWczcyqjyerC5dHeLN6yDdE/OBRq3rM7lAVgG4xAECQQDbER96fxgmHmwH\nx8FWmezwGhE57Ava2EC7PEHCZngZokFbbAnU/7Z9vm+cbyaHcLsiqoWa9H9hPSv/\n28B4besxAkEAyE8m66fpkcsFMlNvbbjs4xa69ctq8iWTKMytLGFl+6iQNvwBc8fF\nT+sjxu2vAPfBBeMLjWzR6hC78/gXCWdiMQJAGwgu4TfDrBh+7irZEa2mzi35SDN3\ndwbOXgxedPWeBlO+SuC3CeCQDU4tiZkxoO7pOKrgF7Hp8f7Rah4czv+JUQJAKFz6\nxMXDJSO52lhBveRjp6bu6ZSh6kV0D+aehrDhsgJXfRzu1fvNYLtLLEy81P8XoC4O\nJ+NjsTzKAvFdAwIYIQJANcXbQytDxQSQDf81ouovW0vXdk0USH/gWhB1w9bIReNF\nTB+r9XOMCG8a6cK9QVseJjoEXA/lG+cP2vWbmkZ+PQ=="
+
+[database]
+  # 主库
+  [database.master]
+    addr = "127.0.0.1:3306"
+    username = "root"
+    password = "123456"
+    dbname = "starter"
+    max_idle = 100
+    max_open = 100
+
+# 从库配置，如果没有的话至少拷贝一份主库配置到这里
+  [[database.slave]]
+    addr = "127.0.0.1:3306"
+    username = "root"
+    password = "123456"
+    dbname = "starter"
+    max_idle = 100
+    max_open = 100
+
+[mongo]
+  url = "mongodb://localhost:27017"
+  database = "starter"
+  # 保持空闲的最大时间,单位: 秒
+  max_conn_idle_time = 180
+  # 连接池大小,设置为机器能承受的最大值
+  max_pool_size = 2
+  username = ""
+  password = ""
+
+[redis]
+  addr = "127.0.0.1:6379"
+  password = ""
+  db = 0
+  pool_size = 5
+  min_idle_conns = 200
+
+[captcha]
+  addr = "127.0.0.1:6379"
+  password = ""
+  db = 1
+  pool_size = 5
+  min_idle_conns = 200
+
+[sessions]
+  name = "golang_sessionid"
+  key = "YGJBI!H#E%&GDIBKHj!lj(*eft&*&fiUyt2937rgi_)(*!#U04hroejl"
+  domain = ".golang-project.com" # localhost 不需要设置
+  addr = "127.0.0.1:6379"
+  password = ""
+  db = 14
+  pool_size = 5
+  min_idle_conns = 200
+
+
+# elastic 连接信息
+[elasticsearch]
+  index = "golang-project"
+  shards = 1
+  replicas = 0
+  sniff = false
+  health = false
+  info_log ="./elastic_info.log"
+  error_log ="./elastic_error.log"
+  trace_log ="./elastic_trace.log"
+  url ="http://127.0.0.1:9200"
+  username = ""
+  password = ""
+
+[log]
+  es = true # 是否使用 elasticsearch
+  index = "golang-project-log" # log 在 es 存放位置，不使用es存储log可不填
+  dir = "./logs/"
+
+# cdn服务器的一些基本信息
+[cdn]

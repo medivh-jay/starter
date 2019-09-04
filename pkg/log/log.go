@@ -1,25 +1,62 @@
 package log
 
 import (
+	"fmt"
+	"github.com/gin-gonic/gin"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/medivh-jay/lfshook"
 	"github.com/olivere/elastic/v7"
+	esconfig "github.com/olivere/elastic/v7/config"
 	"github.com/sirupsen/logrus"
 	"os"
-	"starter/pkg/config"
+	"starter/pkg/app"
 	"time"
 )
 
 var (
 	Terminal = logrus.New()
 	Logger   = Terminal
+	config   logConfig
 )
 
+type logConfig struct {
+	Es    bool   `toml:"es"`
+	Index string `toml:"index"`
+	Dir   string `toml:"dir"`
+}
+
+type elasticConfig struct {
+	URL         string `toml:"url"`
+	Index       string `toml:"index"`
+	Username    string `toml:"username"`
+	Password    string `toml:"password"`
+	Shards      int    `toml:"shards"`
+	Replicas    int    `toml:"replicas"`
+	Sniff       bool   `toml:"sniff"`
+	HealthCheck bool   `toml:"health"`
+	InfoLog     string `toml:"info_log"`
+	ErrorLog    string `toml:"error_log"`
+	TraceLog    string `toml:"trace_log"`
+}
+
 func startEsLog() {
-	conf := config.Config.Logs
-	elasticConfig := config.ElasticSearchConfig()
-	elasticConfig.Index = conf.Index
-	client, err := elastic.NewClientFromConfig(elasticConfig)
+	var elasticConfig elasticConfig
+	_ = app.Config().Bind("application", "elasticsearch", &elasticConfig)
+	elasticConfig.Index = config.Index
+
+	client, err := elastic.NewClientFromConfig(&esconfig.Config{
+		URL:         elasticConfig.URL,
+		Index:       elasticConfig.Index,
+		Username:    elasticConfig.Username,
+		Password:    elasticConfig.Password,
+		Shards:      elasticConfig.Shards,
+		Replicas:    elasticConfig.Replicas,
+		Sniff:       &elasticConfig.Sniff,
+		Healthcheck: &elasticConfig.HealthCheck,
+		Infolog:     elasticConfig.InfoLog,
+		Errorlog:    elasticConfig.ErrorLog,
+		Tracelog:    elasticConfig.TraceLog,
+	})
 	if err != nil {
 		Logger.Fatalln(err)
 	}
@@ -29,35 +66,37 @@ func startEsLog() {
 		hostname = "development"
 	}
 
-	hook, err := NewAsyncElasticHook(client, hostname, logrus.DebugLevel, conf.Index)
+	hook, err := NewBulkProcessorElasticHookWithFunc(client, hostname, logrus.DebugLevel, func() string {
+		return fmt.Sprintf("%s-%s", config.Index, time.Now().Format("2006-01-02"))
+	})
 	if err != nil {
 		Terminal.Panic(err)
 	}
 	es := logrus.New()
 	es.SetFormatter(&logrus.TextFormatter{ForceColors: true})
 	es.Hooks.Add(hook)
-	// 这个操作太影响性能
-	es.SetReportCaller(false)
+	// 这个操作太影响性能,release不启用
+	es.SetReportCaller(gin.Mode() != gin.ReleaseMode)
 	es.SetNoLock()
 	Logger = es
 }
 
 func Start() {
+	_ = app.Config().Bind("application", "log", &config)
 	Terminal.SetFormatter(&logrus.TextFormatter{ForceColors: true})
-	// 这个操作太影响性能
-	Terminal.SetReportCaller(false)
-	conf := config.Config.Logs
+	// 这个操作太影响性能,release不启用
+	Terminal.SetReportCaller(gin.Mode() != gin.ReleaseMode)
 
-	if conf.Es {
+	if config.Es {
 		startEsLog()
 	} else {
-		infoWriter, _ := rotatelogs.New(conf.Dir+"/info_%Y%m%d.log",
+		infoWriter, _ := rotatelogs.New(config.Dir+"/info_%Y%m%d.log",
 			rotatelogs.WithMaxAge(time.Duration(86400)*time.Second), rotatelogs.WithRotationTime(time.Duration(86400)*time.Second))
-		errorWriter, _ := rotatelogs.New(conf.Dir+"/error_%Y%m%d.log",
+		errorWriter, _ := rotatelogs.New(config.Dir+"/error_%Y%m%d.log",
 			rotatelogs.WithMaxAge(time.Duration(86400)*time.Second), rotatelogs.WithRotationTime(time.Duration(86400)*time.Second))
-		debugWriter, _ := rotatelogs.New(conf.Dir+"/debug_%Y%m%d.log",
+		debugWriter, _ := rotatelogs.New(config.Dir+"/debug_%Y%m%d.log",
 			rotatelogs.WithMaxAge(time.Duration(86400)*time.Second), rotatelogs.WithRotationTime(time.Duration(86400)*time.Second))
-		warnWriter, _ := rotatelogs.New(conf.Dir+"/warn_%Y%m%d.log",
+		warnWriter, _ := rotatelogs.New(config.Dir+"/warn_%Y%m%d.log",
 			rotatelogs.WithMaxAge(time.Duration(86400)*time.Second), rotatelogs.WithRotationTime(time.Duration(86400)*time.Second))
 
 		Terminal.AddHook(lfshook.NewHook(
@@ -68,4 +107,6 @@ func Start() {
 				logrus.WarnLevel:  warnWriter,
 			}, &logrus.JSONFormatter{}))
 	}
+
+	app.Register("logger", Logger)
 }

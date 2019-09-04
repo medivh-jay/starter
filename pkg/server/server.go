@@ -12,7 +12,6 @@ import (
 	"net/http/httputil"
 	"os"
 	"starter/pkg/app"
-	"starter/pkg/config"
 	"starter/pkg/elastic"
 	"starter/pkg/log"
 	"starter/pkg/mgo"
@@ -24,24 +23,44 @@ import (
 	"time"
 )
 
+type (
+	application struct {
+		Name          string `toml:"name"`
+		Domain        string `toml:"domain"`
+		Addr          string `toml:"addr"`
+		PasswordToken string `toml:"password_token"`
+		JwtToken      string `toml:"jwt-token"`
+		CertFile      string `toml:"cert_file"`
+		KeyFile       string `toml:"key_file"`
+	}
+
+	applications map[string]application
+)
+
 var (
 	pidFile     = fmt.Sprintf("./%s.pid", app.Name())
 	Mode        string
 	After       func(engine *gin.Engine) // 在各项服务启动之后会执行的操作
 	swagHandler gin.HandlerFunc
 	engine      = gin.New()
+	Modes       applications
 )
+
+func certInfo(module string) (string, string) {
+	return Modes[module].CertFile, Modes[module].KeyFile
+}
 
 // 启动各项服务
 func start() {
-	config.Load()
-
 	log.Start()
 	orm.Start()
 	mongo.Start()
 	mgo.Start()
 	redis.Start()
 	elastic.Start()
+
+	// 加载应用配置
+	_ = app.Config().Bind("application", "application", &Modes)
 
 	// 将 gin 的验证器替换为 v9 版本
 	binding.Validator = new(validator.Validator)
@@ -74,11 +93,11 @@ func Run(service func(engine *gin.Engine)) {
 
 func createServer(engine *gin.Engine) *http.Server {
 	server := &http.Server{
-		Addr:    config.ApplicationAddr(Mode),
+		Addr:    Modes[Mode].Addr,
 		Handler: engine,
 	}
 
-	if certFile, certKey := config.ApplicationCertInfo(Mode); certFile != "" && certKey != "" {
+	if certFile, certKey := certInfo(Mode); certFile != "" && certKey != "" {
 		server.TLSConfig = &tls.Config{}
 		f, _ := tls.LoadX509KeyPair(certFile, certKey)
 		server.TLSConfig.Certificates = []tls.Certificate{f}
@@ -126,7 +145,7 @@ func logger(ctx *gin.Context) {
 		// 在正式环境将上下文传递的变量也进行记录, 方便分析
 		params["keys"] = ctx.Keys
 	}
-	app.Logger().WithFields(params).Info()
+	app.Logger().WithFields(params).Info("request success, status is ", ctx.Writer.Status(), ", client ip is ", ctx.ClientIP())
 }
 
 func recovery(ctx *gin.Context) {

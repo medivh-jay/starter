@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
@@ -44,7 +45,7 @@ func (defaultSaveHandler *DefaultSaveHandler) Save(file *multipart.FileHeader, f
 	filePath := defaultSaveHandler.dst + fileName
 	err := defaultSaveHandler.context.SaveUploadedFile(file, filePath)
 	if err != nil {
-		Logger().Println(err)
+		Get("logger").(*logrus.Logger).Println(err)
 		return ""
 	} else {
 		return defaultSaveHandler.prefix + filePath

@@ -1,5 +1,6 @@
 // 提供全局公用依赖性极低操作
 //  不要尝试写入复杂操作逻辑到这里, 可能会引起令人头疼的循环调用问题
+//  其他包可以调用app, 但app不要调用其他包, 需要调用的在其他包中调用 Register 将服务注册
 package app
 
 import (
@@ -10,8 +11,16 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"starter/pkg/log"
+	"sync"
 )
+
+var services = &Services{services: make(map[string]interface{})}
+
+// 服务汇总
+type Services struct {
+	lock     sync.Mutex
+	services map[string]interface{}
+}
 
 // 数据表结构体必须实现此接口
 type Table interface {
@@ -46,6 +55,20 @@ func NewResponse(code int, data interface{}, message ...string) *response {
 	return &response{Code: code, Data: data, Message: msg}
 }
 
+func (service *Services) register(name string, se interface{}) {
+	service.lock.Lock()
+	defer service.lock.Unlock()
+
+	service.services[name] = se
+}
+
+func (service *Services) get(name string) interface{} {
+	if val, ok := service.services[name]; ok {
+		return val
+	}
+	return nil
+}
+
 // Root
 //  返回程序运行时的运行目录
 func Root() string {
@@ -76,7 +99,16 @@ func Md5(text string) string {
 	return hex.EncodeToString(ctx.Sum(nil))
 }
 
-// 获取log对象, 避免全包各处导入造成的循环调用
 func Logger() *logrus.Logger {
-	return log.Logger
+	return Get("logger").(*logrus.Logger)
+}
+
+// 注册其他包的服务
+func Register(name string, service interface{}) {
+	services.register(name, service)
+}
+
+// 注册其他包的服务
+func Get(name string) interface{} {
+	return services.get(name)
 }

@@ -5,7 +5,6 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"reflect"
 	"starter/pkg/app"
-	"starter/pkg/config"
 	"strings"
 	"time"
 )
@@ -21,10 +20,20 @@ type collection struct {
 	fields   bson.M
 }
 
+type config struct {
+	Url             string `toml:"url"`
+	Database        string `toml:"database"`
+	MaxConnIdleTime int    `toml:"max_conn_idle_time"`
+	MaxPoolSize     int    `toml:"max_pool_size"`
+	Username        string `toml:"username"`
+	Password        string `toml:"password"`
+}
+
 var db *mgo.Session
+var conf config
 
 func Start() {
-	conf := config.Config.Mongo
+	_ = app.Config().Bind("application", "mongo", &conf)
 	dialInfo := &mgo.DialInfo{
 		Addrs:     []string{strings.ReplaceAll(conf.Url, "mongodb://", "")},
 		Direct:    false,
@@ -45,7 +54,7 @@ func Start() {
 // 请显示调用 Close 方法释放session
 func Collection(table app.Table) *collection {
 	database := db.Copy()
-	session := database.DB(config.Config.Mongo.Database)
+	session := database.DB(conf.Database)
 	return &collection{
 		Database: database,
 		Session:  session,
