@@ -7,7 +7,7 @@
 - 修改 module name 为自己的
 - 基本需求  mysql  和 mongo 是必须的, 可以使用 docker 安装
 - 在使用时可按自己需要全盘修改所有内容,毕竟每个人的需求都不同
-- 工具做了一些配置管理, 如果设置 gin.Mode 为 release 的话, 将会读取 configs/application.toml 为配置文件, 否则就是 development.toml
+- 工具做了一些配置管理, configs 配置文件目录下氛围  debug, release 和 test , 分别对应 gin 的三个mode, 指定不同的mode将加载不同目录下的配置
 
 ##### 下边是一些使用到的库
 - 路由使用了gin
