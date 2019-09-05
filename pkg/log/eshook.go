@@ -140,11 +140,7 @@ func createMessage(entry *logrus.Entry, hook *ElasticHook) *message {
 }
 
 func syncFireFunc(entry *logrus.Entry, hook *ElasticHook) error {
-	_, err := hook.client.
-		Index().
-		Index(hook.index()).
-		BodyJson(*createMessage(entry, hook)).
-		Do(hook.ctx)
+	_, err := hook.client.Index().Index(hook.index()).BodyJson(*createMessage(entry, hook)).Do(hook.ctx)
 	return err
 }
 
@@ -152,8 +148,7 @@ func makeBulkFireFunc(client *elastic.Client) (fireFunc, error) {
 	processor, err := client.BulkProcessor().
 		Name("elastic.log.bulk.processor").
 		Workers(3).
-		BulkActions(-1).
-		BulkSize(-1).
+		BulkSize(-1).BulkActions(-1).
 		FlushInterval(10 * time.Second).
 		Do(context.Background())
 
