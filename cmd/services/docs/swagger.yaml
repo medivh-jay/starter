@@ -11,10 +11,6 @@ definitions:
       total:
         description: 总数量
         type: integer
-    required:
-    - amount
-    - item_id
-    - total
     type: object
 host: golang-project.com
 info:

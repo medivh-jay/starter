@@ -1,0 +1,135 @@
+version: '3'
+services:
+  redis:
+    image: redis
+    ports:
+      - "20020:6379"
+    expose:
+      - 6379
+    container_name: "go-redis"
+    networks:
+      - dev
+  elasticsearch:
+    image: elasticsearch:7.3.1
+    environment:
+      discovery.type: "single-node"
+    ports:
+      - "20021:9200"
+    expose:
+      - 9200
+    container_name: "go-elasticsearch"
+    networks:
+      - dev
+  mysql:
+    image: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "123456"
+      MYSQL_USER: 'root'
+      MYSQL_PASS: '123456'
+    ports:
+      - "20022:3306"
+    expose:
+      - 3306
+    container_name: "go-mysql"
+    networks:
+      - dev
+  mongo:
+    image: mongo
+    ports:
+      - "20023:27017"
+    expose:
+      - 27017
+    container_name: "go-mongo"
+    networks:
+      - dev
+  # golang 服务
+  manager:
+    image: golang
+    tty: true
+    container_name: "go-manager"
+    build: ./
+    ports:
+      - "22223:22223"
+    working_dir: /golang-project/
+    command:
+      - /bin/bash
+      - -c
+      - |
+        make manager
+        ./manager
+    links:
+      - redis
+      - elasticsearch
+      - mongo
+      - mysql
+    networks:
+      - dev
+    depends_on:
+      - elasticsearch
+      - redis
+      - mongo
+      - mysql
+    volumes:
+      - .:/golang-project
+#      - $HOME/medivh/go:/go  # 这里可在自己开发时指定本地go目录
+  admin:
+    image: golang
+    tty: true
+    container_name: "go-admin"
+    build: ./
+    ports:
+      - "22224:22224"
+    working_dir: /golang-project/
+    command:
+      - /bin/bash
+      - -c
+      - |
+        make admin
+        ./admin
+    links:
+      - redis
+      - elasticsearch
+      - mongo
+      - mysql
+    networks:
+      - dev
+    depends_on:
+      - elasticsearch
+      - redis
+      - mongo
+      - mysql
+    volumes:
+      - .:/golang-project
+#      - $HOME/medivh/go:/go  # 这里可在自己开发时指定本地go目录
+  services:
+    image: golang
+    tty: true
+    container_name: "go-services"
+    build: ./
+    ports:
+      - "22222:22222"
+    working_dir: /golang-project/
+    command:
+      - /bin/bash
+      - -c
+      - |
+        make services
+        ./services
+    links:
+      - redis
+      - elasticsearch
+      - mongo
+      - mysql
+    networks:
+      - dev
+    depends_on:
+      - elasticsearch
+      - redis
+      - mongo
+      - mysql
+    volumes:
+      - .:/golang-project
+#      - $HOME/medivh/go:/go  # 这里可在自己开发时指定本地go目录
+networks:
+  dev:
+    driver: bridge

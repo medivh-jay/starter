@@ -43,11 +43,6 @@
     "definitions": {
         "entities.Order": {
             "type": "object",
-            "required": [
-                "amount",
-                "item_id",
-                "total"
-            ],
             "properties": {
                 "amount": {
                     "description": "总金额",

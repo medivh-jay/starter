@@ -43,7 +43,9 @@ func startEsLog() {
 	var elasticConfig elasticConfig
 	_ = app.Config().Bind("application", "elasticsearch", &elasticConfig)
 	elasticConfig.Index = config.Index
+	var retryTimes = 0
 
+retry:
 	client, err := elastic.NewClientFromConfig(&esconfig.Config{
 		URL:         elasticConfig.URL,
 		Index:       elasticConfig.Index,
@@ -58,6 +60,12 @@ func startEsLog() {
 		Tracelog:    elasticConfig.TraceLog,
 	})
 	if err != nil {
+		retryTimes++
+		Logger.Info("try to reconnect: elasticsearch")
+		if retryTimes < 3 {
+			time.Sleep(time.Duration(retryTimes) * 5 * time.Second)
+			goto retry
+		}
 		Logger.Fatalln(err)
 	}
 
@@ -70,7 +78,7 @@ func startEsLog() {
 		return fmt.Sprintf("%s-%s", config.Index, time.Now().Format("2006-01-02"))
 	})
 	if err != nil {
-		Terminal.Panic(err)
+		Terminal.Debug(err)
 	}
 	es := logrus.New()
 	es.SetFormatter(&logrus.TextFormatter{ForceColors: true})

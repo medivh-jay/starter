@@ -18,7 +18,7 @@
 [database]
   # 主库
   [database.master]
-    addr = "127.0.0.1:3306"
+    addr = "mysql:3306"
     username = "root"
     password = "123456"
     dbname = "starter"
@@ -27,7 +27,7 @@
 
 # 从库配置，如果没有的话至少拷贝一份主库配置到这里
   [[database.slave]]
-    addr = "127.0.0.1:3306"
+    addr = "mysql:3306"
     username = "root"
     password = "123456"
     dbname = "starter"
@@ -35,7 +35,7 @@
     max_open = 100
 
 [mongo]
-  url = "mongodb://localhost:27017"
+  url = "mongodb://mongo:27017"
   database = "starter"
   # 保持空闲的最大时间,单位: 秒
   max_conn_idle_time = 180
@@ -45,14 +45,14 @@
   password = ""
 
 [redis]
-  addr = "127.0.0.1:6379"
+  addr = "redis:6379"
   password = ""
   db = 0
   pool_size = 5
   min_idle_conns = 200
 
 [captcha]
-  addr = "127.0.0.1:6379"
+  addr = "redis:6379"
   password = ""
   db = 1
   pool_size = 5
@@ -62,7 +62,7 @@
   name = "golang_sessionid"
   key = "YGJBI!H#E%&GDIBKHj!lj(*eft&*&fiUyt2937rgi_)(*!#U04hroejl"
   domain = ".golang-project.com" # localhost 不需要设置
-  addr = "127.0.0.1:6379"
+  addr = "redis:6379"
   password = ""
   db = 14
   pool_size = 5
@@ -79,7 +79,7 @@
   info_log ="./elastic_info.log"
   error_log ="./elastic_error.log"
   trace_log ="./elastic_trace.log"
-  url ="http://127.0.0.1:9200"
+  url ="http://elasticsearch:9200"
   username = ""
   password = ""
 

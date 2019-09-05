@@ -151,14 +151,14 @@ func syncFireFunc(entry *logrus.Entry, hook *ElasticHook) error {
 func makeBulkFireFunc(client *elastic.Client) (fireFunc, error) {
 	processor, err := client.BulkProcessor().
 		Name("elastic.log.bulk.processor").
-		Workers(2).
-		FlushInterval(time.Second).
+		Workers(3).
+		BulkActions(-1).
+		BulkSize(-1).
+		FlushInterval(10 * time.Second).
 		Do(context.Background())
 
 	return func(entry *logrus.Entry, hook *ElasticHook) error {
-		r := elastic.NewBulkIndexRequest().
-			Index(hook.index()).
-			Doc(*createMessage(entry, hook))
+		r := elastic.NewBulkIndexRequest().Index(hook.index()).Doc(*createMessage(entry, hook))
 		processor.Add(r)
 		return nil
 	}, err
