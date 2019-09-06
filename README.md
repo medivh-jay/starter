@@ -1,4 +1,4 @@
-<p>
+<p align="center">
 <img align="center" src="assets/STARTER-logo.png" width="350px" />
 </p>
 <h3 align="center">STARTER - WEB开发集成架构</h3>
