@@ -49,6 +49,9 @@ func main() {
 				}
 			}
 		}
+
+		//email.StartEmailSender()
+		//email.Send(email.NewSender("服务启动成功", "服务启动成功!", "xxx@qq.com"))
 	}
 
 	server.Run(manager.GetEngine)
