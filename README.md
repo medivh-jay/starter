@@ -1,4 +1,8 @@
-## STARTER  [wiki](https://github.com/medivh-jay/starter/wiki/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8)
+<p>
+<img align="center" src="assets/STARTER-logo.png" width="350px" />
+</p>
+<h3 align="center">STARTER - WEB开发集成架构</h3>
+<p><a align="center" href="https://github.com/medivh-jay/starter/wiki/%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8">wiki</a></p>
 
 - 本项目是一个整合了一些基础开发工具并稍微封装了一些日常操作的工具整合
 - 可以使用它进行正常的开发而不必要去一个个重新装go库，重新组织结构
