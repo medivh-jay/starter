@@ -1,5 +1,5 @@
 <p align="center">
-<img align="center" src="assets/STARTER-logo.png" width="300px" />
+<img align="center" src="assets/STARTER-logo.svg" width="300px" />
 </p>
 <h3 align="center">STARTER - WEB开发集成架构 <a align="center" href="https://github.com/medivh-jay/starter/wiki/Step-1:%E4%B8%8B%E8%BD%BD%E6%9C%AC%E9%A1%B9%E7%9B%AE">wiki</a></h3>
 
