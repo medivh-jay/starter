@@ -18,7 +18,10 @@ type configuration struct {
 	once    sync.Once
 }
 
-var config = new(configuration).singleLoad()
+var (
+	config = new(configuration).singleLoad()
+	json   = jsoniter.Config{EscapeHTML: true, TagKey: "toml"}.Froze()
+)
 
 func Config() *configuration {
 	return config
@@ -83,6 +86,6 @@ func (conf *configuration) Bind(node, key string, obj interface{}) error {
 }
 
 func (conf *configuration) assignment(val, obj interface{}) error {
-	data, _ := jsoniter.Marshal(val)
-	return jsoniter.Unmarshal(data, obj)
+	data, _ := json.Marshal(val)
+	return json.Unmarshal(data, obj)
 }

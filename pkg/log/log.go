@@ -86,6 +86,9 @@ retry:
 	// 这个操作太影响性能,release不启用
 	es.SetReportCaller(gin.Mode() != gin.ReleaseMode)
 	es.SetNoLock()
+	if gin.Mode() != gin.ReleaseMode {
+		Terminal.Level = logrus.DebugLevel
+	}
 	Logger = es
 }
 
@@ -95,7 +98,6 @@ func Start() {
 	// 这个操作太影响性能,release不启用
 	Terminal.SetReportCaller(gin.Mode() != gin.ReleaseMode)
 	Terminal.SetNoLock()
-
 	if config.Es {
 		startEsLog()
 	} else {
@@ -107,6 +109,10 @@ func Start() {
 			rotatelogs.WithMaxAge(time.Duration(86400)*time.Second), rotatelogs.WithRotationTime(time.Duration(86400)*time.Second))
 		warnWriter, _ := rotatelogs.New(config.Dir+"/warn_%Y%m%d.log",
 			rotatelogs.WithMaxAge(time.Duration(86400)*time.Second), rotatelogs.WithRotationTime(time.Duration(86400)*time.Second))
+
+		if gin.Mode() != gin.ReleaseMode {
+			Terminal.Level = logrus.DebugLevel
+		}
 
 		Terminal.AddHook(lfshook.NewHook(
 			lfshook.WriterMap{
