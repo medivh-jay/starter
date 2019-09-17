@@ -47,7 +47,7 @@ func (config config) ElasticSearchConfig() *esConfig.Config {
 func Start() {
 	ES, err = elastic.NewClientFromConfig(conf.ElasticSearchConfig())
 	if err != nil {
-		app.Logger().Fatalln(err)
+		app.Logger().Error(err)
 	}
 }
 

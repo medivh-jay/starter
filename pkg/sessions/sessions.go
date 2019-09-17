@@ -27,10 +27,10 @@ func Start(engine *gin.Engine) {
 	store, err := redisSession.NewStoreWithDB(conf.PoolSize, "tcp", conf.Addr, conf.Password, strconv.Itoa(conf.Db), []byte(conf.Key))
 	if err != nil {
 		log.Logger.Error(err)
+	} else {
+		store.Options(sessions.Options{MaxAge: 3600, Path: "/", Domain: conf.Domain, HttpOnly: true})
+		engine.Use(sessions.Sessions(conf.Name, store))
 	}
-
-	store.Options(sessions.Options{MaxAge: 3600, Path: "/", Domain: conf.Domain, HttpOnly: true})
-	engine.Use(sessions.Sessions(conf.Name, store))
 }
 
 func Get(c *gin.Context, key string) string {

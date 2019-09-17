@@ -48,12 +48,13 @@ func Start() {
 	db, err = mgo.DialWithInfo(dialInfo)
 	if err != nil {
 		app.Logger().Error(err)
+	} else {
+		db.SetMode(mgo.Monotonic, true)
 	}
-	db.SetMode(mgo.Monotonic, true)
 }
 
 // 得到一个mongo操作对象
-// 请显示调用 Close 方法释放session
+// 请显式调用 Close 方法释放session
 func Collection(table app.Table) *collection {
 	database := db.Copy()
 	session := database.DB(conf.Database)

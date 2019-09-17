@@ -95,5 +95,11 @@ host="smtp.163.com" # 邮件服务商 smtp 地址
 port=465  # 端口
 ssl=true # 是否启动ssl
 
+[kafka]
+# 配置参数参考这里 https://github.com/edenhill/librdkafka/tree/master/CONFIGURATION.md
+# 参数key用引号包裹
+"bootstrap.servers"="localhost"
+"group.id"="default"
+"auto.offset.reset"="earliest"
 # cdn服务器的一些基本信息
 [cdn]

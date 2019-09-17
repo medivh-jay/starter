@@ -49,6 +49,7 @@ require (
 	golang.org/x/sys v0.0.0-20190904154756-749cb33beabd // indirect
 	golang.org/x/tools v0.0.0-20190905035308-adb45749da8e // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
+	gopkg.in/confluentinc/confluent-kafka-go.v1 v1.1.0
 	gopkg.in/go-playground/validator.v9 v9.29.1
 	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce
 )
