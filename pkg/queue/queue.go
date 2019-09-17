@@ -125,8 +125,8 @@ func (producer *producer) handle() {
 	}()
 }
 
-// 发送消息, value将被转为json
-func (producer *producer) Send(topic string, value interface{}) *producer {
+// 发送消息, value如果类型不是 *kafka.Message, 将被转为默认的 json []byte
+func (producer *producer) Send(topic string, value interface{}) error {
 	producer.connected.Do(func() {
 		var err error
 		producer.producer, err = kafka.NewProducer(&producer.conf)
@@ -136,17 +136,21 @@ func (producer *producer) Send(topic string, value interface{}) *producer {
 			producer.handle()
 		}
 	})
-	data, err := jsoniter.Marshal(value)
-	if err != nil {
-		app.Logger().Error(err)
-	} else {
-		_ = producer.producer.Produce(&kafka.Message{
+	var err error
+	switch value.(type) {
+	case *kafka.Message:
+		err = producer.producer.Produce(value.(*kafka.Message), nil)
+	default:
+		data, err := jsoniter.Marshal(value)
+		if err != nil {
+			app.Logger().Error(err)
+		}
+		err = producer.producer.Produce(&kafka.Message{
 			TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
 			Value:          data,
 		}, nil)
 	}
-
-	return producer
+	return err
 }
 
 func (producer *producer) Flush() {
