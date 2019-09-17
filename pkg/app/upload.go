@@ -45,7 +45,7 @@ func (defaultSaveHandler *DefaultSaveHandler) Save(file *multipart.FileHeader, f
 	filePath := defaultSaveHandler.dst + fileName
 	err := defaultSaveHandler.context.SaveUploadedFile(file, filePath)
 	if err != nil {
-		Get("logger").(*logrus.Logger).Println(err)
+		Get("logger").(*logrus.Logger).Error(err)
 		return ""
 	} else {
 		return defaultSaveHandler.prefix + filePath

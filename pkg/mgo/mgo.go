@@ -1,10 +1,12 @@
 package mgo
 
 import (
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"reflect"
 	"starter/pkg/app"
+	"starter/pkg/unique"
 	"strings"
 	"time"
 )
@@ -205,18 +207,22 @@ func BeforeCreate(document interface{}) interface{} {
 		for i := 0; i < typ.NumField(); i++ {
 			data[typ.Field(i).Tag.Get("bson")] = val.Field(i).Interface()
 		}
-		dataVal := reflect.ValueOf(data)
 		if val.FieldByName("Id").Type() == reflect.TypeOf(bson.ObjectId("")) {
-			dataVal.SetMapIndex(reflect.ValueOf("_id"), reflect.ValueOf(bson.NewObjectId()))
+			data["_id"] = primitive.NewObjectID()
 		}
 
-		if val.FieldByName("Id").Interface() == "" {
-			dataVal.SetMapIndex(reflect.ValueOf("_id"), reflect.ValueOf(bson.NewObjectId().String()))
+		if val.FieldByName("Id").Kind() == reflect.String && val.FieldByName("Id").Interface() == "" {
+			data["_id"] = primitive.NewObjectID().Hex()
 		}
 
-		dataVal.SetMapIndex(reflect.ValueOf("created_at"), reflect.ValueOf(time.Now().Unix()))
-		dataVal.SetMapIndex(reflect.ValueOf("updated_at"), reflect.ValueOf(time.Now().Unix()))
-		return dataVal.Interface()
+		if IsIntn(val.FieldByName("Id").Kind()) && val.FieldByName("Id").Interface() == 0 {
+			data["_id"] = unique.Id()
+		}
+
+		now := time.Now().Unix()
+		data["created_at"] = now
+		data["updated_at"] = now
+		return data
 
 	default:
 		if val.Type() == reflect.TypeOf(bson.M{}) {
@@ -228,6 +234,10 @@ func BeforeCreate(document interface{}) interface{} {
 		}
 		return val.Interface()
 	}
+}
+
+func IsIntn(p reflect.Kind) bool {
+	return p == reflect.Int || p == reflect.Int64 || p == reflect.Uint64 || p == reflect.Uint32
 }
 
 func BeforeUpdate(document interface{}) interface{} {
@@ -252,9 +262,8 @@ func BeforeUpdate(document interface{}) interface{} {
 				data[typ.Field(i).Tag.Get("bson")] = val.Field(i).Interface()
 			}
 		}
-		dataVal := reflect.ValueOf(data)
-		dataVal.SetMapIndex(reflect.ValueOf("updated_at"), reflect.ValueOf(time.Now().Unix()))
-		return dataVal.Interface()
+		data["updated_at"] = time.Now().Unix()
+		return data
 
 	default:
 		if val.Type() == reflect.TypeOf(bson.M{}) {
