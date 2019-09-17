@@ -37,7 +37,7 @@ gocreator -m mode-name
 ##### 提供基础CURD后端界面操作,wiki有模板使用说明
 ![admin](web/admin/static/images/admin.png)
 
-- 感谢 
+## 感谢所有开源项目的支持 
 
 - [LayUI](https://www.layui.com/)
 - [X-admin](http://x.xuebingsi.com/)
