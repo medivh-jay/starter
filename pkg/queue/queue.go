@@ -54,13 +54,13 @@ func (q *consumer) SetConfig(key string, value interface{}) *consumer {
 // 将会开启一个协程运行消费者程序
 func (q *consumer) Do(consumer func(consumer *kafka.Consumer, message *kafka.Message)) *consumer {
 	if len(q.topics) == 0 {
-		app.Logger().Error("consumer: topics is empty")
+		app.Logger().WithField("log_type", "pkg.queue.queue").Error("consumer: topics is empty")
 		return q
 	}
 
 	client, err := kafka.NewConsumer(&q.conf)
 	if err != nil {
-		app.Logger().Error(err)
+		app.Logger().WithField("log_type", "pkg.queue.queue").Error(err)
 	}
 	q.consumer = client
 
@@ -75,7 +75,7 @@ func (q *consumer) Do(consumer func(consumer *kafka.Consumer, message *kafka.Mes
 				if err == nil {
 					consumer(q.consumer, msg)
 				} else {
-					app.Logger().WithField("kafka_msg", msg).Error(err)
+					app.Logger().WithField("log_type", "pkg.queue.queue").WithField("kafka_msg", msg).Error(err)
 				}
 			}
 		}
@@ -113,10 +113,10 @@ func (producer *producer) handle() {
 				switch ev := event.(type) {
 				case *kafka.Message:
 					if ev.TopicPartition.Error != nil {
-						app.Logger().WithField("kafka_event", ev).Error("kafka: delivery failed")
+						app.Logger().WithField("log_type", "pkg.queue.queue").WithField("kafka_event", ev).Error("kafka: delivery failed")
 					} else {
 						if gin.IsDebugging() {
-							app.Logger().Debug(ev)
+							app.Logger().WithField("log_type", "pkg.queue.queue").Debug(ev)
 						}
 					}
 				}
@@ -131,7 +131,7 @@ func (producer *producer) Send(topic string, value interface{}) error {
 		var err error
 		producer.producer, err = kafka.NewProducer(&producer.conf)
 		if err != nil {
-			app.Logger().Error(err)
+			app.Logger().WithField("log_type", "pkg.queue.queue").Error(err)
 		} else {
 			producer.handle()
 		}
@@ -143,7 +143,7 @@ func (producer *producer) Send(topic string, value interface{}) error {
 	default:
 		data, err := jsoniter.Marshal(value)
 		if err != nil {
-			app.Logger().Error(err)
+			app.Logger().WithField("log_type", "pkg.queue.queue").Error(err)
 		}
 		err = producer.producer.Produce(&kafka.Message{
 			TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},

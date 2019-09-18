@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
+	"starter/pkg/app"
 	"strings"
 )
 
@@ -20,8 +21,10 @@ func NewSorter(driver EntityTyp) Sort {
 		return new(mongoSort)
 	case Mgo:
 		return new(mgoSort)
+	default:
+		app.Logger().WithField("log_type", "pkg.managers.sort").Panic("driver not found")
+		return nil
 	}
-	panic("driver not found")
 }
 
 type (

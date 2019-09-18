@@ -77,6 +77,6 @@ func Get(name string) Payment {
 	if driver, ok := drivers[name]; ok {
 		return driver
 	}
-	app.Logger().Error("payment: driver does not exists")
+	app.Logger().WithField("log_type", "pkg.payments.payments").Error("payment: driver does not exists")
 	return nil
 }

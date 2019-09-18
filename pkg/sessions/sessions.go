@@ -5,7 +5,6 @@ import (
 	redisSession "github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 	"starter/pkg/app"
-	"starter/pkg/log"
 	"strconv"
 )
 
@@ -26,7 +25,7 @@ func Start(engine *gin.Engine) {
 	_ = app.Config().Bind("application", "sessions", &conf)
 	store, err := redisSession.NewStoreWithDB(conf.PoolSize, "tcp", conf.Addr, conf.Password, strconv.Itoa(conf.Db), []byte(conf.Key))
 	if err != nil {
-		log.Logger.Error(err)
+		app.Logger().WithField("log_type", "pkg.sessions.sessions").Error(err)
 	} else {
 		store.Options(sessions.Options{MaxAge: 3600, Path: "/", Domain: conf.Domain, HttpOnly: true})
 		engine.Use(sessions.Sessions(conf.Name, store))

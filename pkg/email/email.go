@@ -79,7 +79,7 @@ func ParseHtml(path string, data interface{}) *Html {
 	html.body = make([]byte, 0)
 	parse, err := template.ParseFiles(path)
 	if err != nil {
-		panic(err)
+		app.Logger().WithField("log_type", "pkg.email.email").Error(err)
 		return nil
 	}
 
@@ -142,7 +142,7 @@ func task() {
 			} else {
 				err := smtp.SendMail(fmt.Sprintf("%s:%d", email.host, email.port), auth, email.username, object.To, object.convertToBody())
 				if err != nil {
-					app.Logger().Error(err)
+					app.Logger().WithField("log_type", "pkg.email.email").Error(err)
 				}
 			}
 		}

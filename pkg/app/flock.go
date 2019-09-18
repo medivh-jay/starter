@@ -2,7 +2,6 @@ package app
 
 import (
 	"errors"
-	"log"
 	"os"
 	"syscall"
 )
@@ -23,7 +22,7 @@ type Flock struct {
 func FLock(file string) (*Flock, error) {
 	f, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
-		Logger().Println("lock: open file error ", err)
+		Logger().WithField("log_type", "pkg.app.flock").Error("lock: open file error ", err)
 		return nil, canNotOpenFile
 	}
 
@@ -39,7 +38,7 @@ func FLock(file string) (*Flock, error) {
 func (lock *Flock) Lock() error {
 	err := syscall.Flock(int(lock.f.Fd()), syscall.LOCK_EX|syscall.LOCK_NB)
 	if err != nil {
-		log.Println("lock: lock error: ", err)
+		Logger().WithField("log_type", "pkg.app.flock").Error("lock: lock error: ", err)
 		return lockFileError
 	}
 	return nil
@@ -49,7 +48,7 @@ func (lock *Flock) Lock() error {
 func (lock *Flock) WriteTo(body string) error {
 	_ = lock.f.Truncate(0)
 	if _, err := lock.f.WriteString(body); err != nil {
-		log.Println("write error: ", err)
+		Logger().WithField("log_type", "pkg.app.flock").Error("write error: ", err)
 		return writeFileError
 	}
 	return nil

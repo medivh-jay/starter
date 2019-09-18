@@ -102,7 +102,7 @@ func (s *customizeRdsStore) Set(id string, value string) {
 	s.lazyLoad()
 	err := s.redisClient.Set(id, value, time.Minute*10).Err()
 	if err != nil {
-		app.Logger().Error(err)
+		app.Logger().WithField("log_type", "pkg.captcha.captcha").Error(err)
 	}
 }
 
@@ -110,13 +110,13 @@ func (s *customizeRdsStore) Get(id string, clear bool) string {
 	s.lazyLoad()
 	val, err := s.redisClient.Get(id).Result()
 	if err != nil {
-		app.Logger().Error(err)
+		app.Logger().WithField("log_type", "pkg.captcha.captcha").Error(err)
 		return ""
 	}
 	if clear {
 		err := s.redisClient.Del(id).Err()
 		if err != nil {
-			app.Logger().Error(err)
+			app.Logger().WithField("log_type", "pkg.captcha.captcha").Error(err)
 			return ""
 		}
 	}

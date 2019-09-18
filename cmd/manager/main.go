@@ -1,9 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
+	jsoniter "github.com/json-iterator/go"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
 	"starter/internal/entities"
 	"starter/internal/manager"
 	"starter/pkg/app"
@@ -11,6 +14,7 @@ import (
 	"starter/pkg/mongo"
 	"starter/pkg/password"
 	"starter/pkg/permission"
+	"starter/pkg/queue"
 	"starter/pkg/server"
 )
 
@@ -24,6 +28,14 @@ import (
 func main() {
 	server.Mode = "manager"
 	middlewares.AuthEntity = entities.Staff{}
+
+	queue.NewConsumer().SetTopics("test").Do(func(consumer *kafka.Consumer, message *kafka.Message) {
+		var d map[string]interface{}
+		_ = jsoniter.Unmarshal(message.Value, &d)
+		fmt.Println(d)
+	})
+
+	_ = queue.NewProducer().Send("test", map[string]int{"a": 1, "b": 2})
 
 	// 在mongo连接上之后再操作
 	server.After = func(engine *gin.Engine) {
@@ -52,6 +64,8 @@ func main() {
 
 		//email.StartEmailSender()
 		//email.Send(email.NewSender("服务启动成功", "服务启动成功!", "xxx@qq.com"))
+		//email.Send(email.NewHtmlSender("subject", email.ParseHtml("HTML模板路径", gin.H{"name":"value"}), ""))
+		// page.NewMgo().
 	}
 
 	server.Run(manager.GetEngine)

@@ -3,14 +3,14 @@ package email
 import (
 	"crypto/tls"
 	"fmt"
-	"log"
 	"net/smtp"
+	"starter/pkg/app"
 )
 
 func dial() (*smtp.Client, error) {
 	conn, err := tls.Dial("tcp", fmt.Sprintf("%s:%d", email.host, email.port), nil)
 	if err != nil {
-		log.Println("Dialing Error:", err)
+		app.Logger().WithField("log_type", "pkg.email.ssl").Error("dialing error:", err)
 		return nil, err
 	}
 	return smtp.NewClient(conn, email.host)
@@ -57,14 +57,14 @@ func sendBySsl(sender *Object) {
 
 	err = c.Quit()
 	if err != nil {
-		log.Println(err)
+		app.Logger().WithField("log_type", "pkg.email.ssl").Error(err)
 		return
 	}
 }
 
 func catch(err error) bool {
 	if err != nil {
-		log.Println(err)
+		app.Logger().WithField("log_type", "pkg.email.ssl").Error(err)
 		return false
 	}
 	return true

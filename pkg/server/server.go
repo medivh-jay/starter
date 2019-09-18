@@ -72,7 +72,7 @@ func Run(service func(engine *gin.Engine)) {
 	defer lock.UnLock()
 
 	start()
-	app.Logger().Info("server started at:", time.Now().String())
+	app.Logger().WithField("log_type", "pkg.server.server").Info("server started at:", time.Now().String())
 	engine.Use(logger, recovery)
 	service(engine)
 
@@ -85,7 +85,7 @@ func Run(service func(engine *gin.Engine)) {
 	}
 
 	_ = gracehttp.ServeWithOptions([]*http.Server{createServer(engine)}, gracehttp.PreStartProcess(func() error {
-		app.Logger().Println("unlock pid")
+		app.Logger().WithField("log_type", "pkg.server.server").Println("unlock pid")
 		lock.UnLock()
 		return nil
 	}))
@@ -110,12 +110,12 @@ func createServer(engine *gin.Engine) *http.Server {
 func createPid() *app.Flock {
 	pidLock, pidLockErr := app.FLock(pidFile)
 	if pidLockErr != nil {
-		app.Logger().Fatalln("createPid: lock error", pidLockErr)
+		app.Logger().WithField("log_type", "pkg.server.server").Fatalln("createPid: lock error", pidLockErr)
 	}
 
 	err := pidLock.WriteTo(fmt.Sprintf(`%d`, os.Getpid()))
 	if err != nil {
-		app.Logger().Fatalln("write error: ", err)
+		app.Logger().WithField("log_type", "pkg.server.server").Fatalln("write error: ", err)
 	}
 	return pidLock
 }
@@ -141,6 +141,7 @@ func logger(ctx *gin.Context) {
 	params["body_size"] = ctx.Writer.Size()
 	params["client_ip"] = ctx.ClientIP()
 	params["user_agent"] = ctx.Request.UserAgent()
+	params["log_type"] = "pkg.server.server"
 	if !gin.IsDebugging() {
 		// 在正式环境将上下文传递的变量也进行记录, 方便分析
 		params["keys"] = ctx.Keys
@@ -163,12 +164,17 @@ func recovery(ctx *gin.Context) {
 			httpRequest, _ := httputil.DumpRequest(ctx.Request, false)
 
 			if gin.IsDebugging() {
-				app.Logger().Error(string(httpRequest))
+				app.Logger().WithField("log_type", "pkg.server.server").Error(string(httpRequest))
 				for i := 0; i < len(stack); i++ {
-					app.Logger().WithFields(logrus.Fields{"func": stack[i]["func"], "source": stack[i]["source"]}).Error(fmt.Sprintf("%s:%d", stack[i]["file"], stack[i]["line"]))
+					app.Logger().
+						WithField("log_type", "pkg.server.server").
+						WithFields(logrus.Fields{"func": stack[i]["func"], "source": stack[i]["source"]}).
+						Error(fmt.Sprintf("%s:%d", stack[i]["file"], stack[i]["line"]))
 				}
 			} else {
-				app.Logger().WithField("stack", stack).WithField("request", string(httpRequest)).Error()
+				app.Logger().WithField("log_type", "pkg.server.server").
+					WithField("stack", stack).WithField("request", string(httpRequest)).
+					Error()
 			}
 
 			if brokenPipe {

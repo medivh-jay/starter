@@ -54,7 +54,7 @@ func GetPermissionsForUser(id string) []Permission {
 	var binding Binding
 	err := mongo.Collection(binding).Where(bson.M{"user_id": id}).FindOne(&binding)
 	if err != nil {
-		app.Logger().Error(err)
+		app.Logger().WithField("log_type", "pkg.permission.permission").Error(err)
 		return nil
 	}
 
@@ -62,7 +62,7 @@ func GetPermissionsForUser(id string) []Permission {
 	var role Role
 	err = mongo.Collection(role).Where(bson.M{"_id": roleId}).FindOne(&role)
 	if err != nil {
-		app.Logger().Error(err)
+		app.Logger().WithField("log_type", "pkg.permission.permission").Error(err)
 		return nil
 	}
 

@@ -5,7 +5,6 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/gin-gonic/gin"
 	jsoniter "github.com/json-iterator/go"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -43,7 +42,7 @@ func (conf *configuration) walk(path string, info os.FileInfo, err error) error 
 			var config map[string]interface{}
 			_, err = toml.DecodeFile(path, &config)
 			if err != nil {
-				log.Fatalln(err)
+				Logger().WithField("log_type", "pkg.app.config").Error(err)
 			}
 			relPath, _ := filepath.Rel(Root()+"/configs/"+gin.Mode(), strings.TrimSuffix(path, ".toml"))
 			node := strings.ReplaceAll(relPath, "/", ".")

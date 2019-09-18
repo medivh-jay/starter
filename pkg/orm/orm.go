@@ -54,8 +54,8 @@ func Start() {
 	_ = app.Config().Bind("application", "database", &conf)
 	orm.Master, err = gorm.Open("mysql", createConnectionUrl(conf.Master.Username, conf.Master.Password, conf.Master.Addr, conf.Master.DbName))
 	if err != nil {
-		app.Logger().Warn("database connect error, you can't use orm support")
-		app.Logger().Warn(err)
+		app.Logger().WithField("log_type", "pkg.orm.orm").Warn("database connect error, you can't use orm support")
+		app.Logger().WithField("log_type", "pkg.orm.orm").Warn(err)
 	}
 	orm.Master.LogMode(true)
 	orm.Master.DB().SetMaxIdleConns(conf.Master.MaxIdle)
@@ -64,8 +64,8 @@ func Start() {
 	for _, slave := range conf.Slaves {
 		connect, err := gorm.Open("mysql", createConnectionUrl(slave.Username, slave.Password, slave.Addr, slave.DbName))
 		if err != nil {
-			app.Logger().Warn("database connect error, you can't use orm support")
-			app.Logger().Warn(err)
+			app.Logger().WithField("log_type", "pkg.orm.orm").Warn("database connect error, you can't use orm support")
+			app.Logger().WithField("log_type", "pkg.orm.orm").Warn(err)
 		}
 		orm.Slaves = append(orm.Slaves, connect)
 	}

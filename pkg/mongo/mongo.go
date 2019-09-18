@@ -56,12 +56,12 @@ func Start() {
 
 	client, err = mongo.NewClient(mongoOptions.ApplyURI(conf.Url))
 	if err != nil {
-		app.Logger().Error(err)
+		app.Logger().WithField("log_type", "pkg.mongo.mongo").Error(err)
 	}
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	err = client.Connect(ctx)
 	if err != nil {
-		app.Logger().Error(err)
+		app.Logger().WithField("log_type", "pkg.mongo.mongo").Error(err)
 	}
 }
 
@@ -110,7 +110,7 @@ func (collection *collection) InsertOne(document interface{}) *mongo.InsertOneRe
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	result, err := collection.Table.InsertOne(ctx, BeforeCreate(document))
 	if err != nil {
-		app.Logger().Error(err)
+		app.Logger().WithField("log_type", "pkg.mongo.mongo").Error(err)
 	}
 	return result
 }
@@ -122,7 +122,7 @@ func (collection *collection) InsertMany(documents interface{}) *mongo.InsertMan
 	data = BeforeCreate(documents).([]interface{})
 	result, err := collection.Table.InsertMany(ctx, data)
 	if err != nil {
-		app.Logger().Error(err)
+		app.Logger().WithField("log_type", "pkg.mongo.mongo").Error(err)
 	}
 	return result
 }
@@ -133,7 +133,7 @@ func (collection *collection) UpdateOrInsert(documents []interface{}) *mongo.Upd
 	var upsert = true
 	result, err := collection.Table.UpdateMany(ctx, documents, &options.UpdateOptions{Upsert: &upsert})
 	if err != nil {
-		app.Logger().Error(err)
+		app.Logger().WithField("log_type", "pkg.mongo.mongo").Error(err)
 	}
 	return result
 }
@@ -143,7 +143,7 @@ func (collection *collection) UpdateOne(document interface{}) *mongo.UpdateResul
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	result, err := collection.Table.UpdateOne(ctx, collection.filter, bson.M{"$set": BeforeUpdate(document)})
 	if err != nil {
-		app.Logger().Error(err)
+		app.Logger().WithField("log_type", "pkg.mongo.mongo").Error(err)
 	}
 	return result
 }
@@ -153,7 +153,7 @@ func (collection *collection) UpdateMany(document interface{}) *mongo.UpdateResu
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	result, err := collection.Table.UpdateMany(ctx, collection.filter, bson.M{"$set": BeforeUpdate(document)})
 	if err != nil {
-		app.Logger().Error(err)
+		app.Logger().WithField("log_type", "pkg.mongo.mongo").Error(err)
 	}
 	return result
 }
@@ -168,7 +168,7 @@ func (collection *collection) FindOne(document interface{}) error {
 	})
 	err := result.Decode(document)
 	if err != nil {
-		app.Logger().Error(err)
+		app.Logger().WithField("log_type", "pkg.mongo.mongo").Error(err)
 		return err
 	}
 	return nil
@@ -184,13 +184,13 @@ func (collection *collection) FindMany(documents interface{}) {
 		Projection: collection.fields,
 	})
 	if err != nil {
-		app.Logger().Error(err)
+		app.Logger().WithField("log_type", "pkg.mongo.mongo").Error(err)
 	}
 	defer result.Close(ctx)
 
 	val := reflect.ValueOf(documents)
 	if val.Kind() != reflect.Ptr || val.Elem().Kind() != reflect.Slice {
-		app.Logger().Error("result argument must be a slice address")
+		app.Logger().WithField("log_type", "pkg.mongo.mongo").Error("result argument must be a slice address")
 	}
 
 	slice := reflect.MakeSlice(val.Elem().Type(), 0, 0)
@@ -201,7 +201,7 @@ func (collection *collection) FindMany(documents interface{}) {
 		item := reflect.New(itemTyp)
 		err := result.Decode(item.Interface())
 		if err != nil {
-			app.Logger().Error(err)
+			app.Logger().WithField("log_type", "pkg.mongo.mongo").Error(err)
 			break
 		}
 
@@ -213,13 +213,13 @@ func (collection *collection) FindMany(documents interface{}) {
 // 删除数据,并返回删除成功的数量
 func (collection *collection) Delete() int64 {
 	if collection.filter == nil || len(collection.filter) == 0 {
-		app.Logger().Error("you can't delete all documents, it's very dangerous")
+		app.Logger().WithField("log_type", "pkg.mongo.mongo").Error("you can't delete all documents, it's very dangerous")
 		return 0
 	}
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	result, err := collection.Table.DeleteMany(ctx, collection.filter)
 	if err != nil {
-		app.Logger().Error(err)
+		app.Logger().WithField("log_type", "pkg.mongo.mongo").Error(err)
 	}
 	return result.DeletedCount
 }
@@ -228,7 +228,7 @@ func (collection *collection) Count() int64 {
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	result, err := collection.Table.CountDocuments(ctx, collection.filter)
 	if err != nil {
-		app.Logger().Error(err)
+		app.Logger().WithField("log_type", "pkg.mongo.mongo").Error(err)
 		return 0
 	}
 	return result

@@ -45,7 +45,7 @@ func (defaultSaveHandler *DefaultSaveHandler) Save(file *multipart.FileHeader, f
 	filePath := defaultSaveHandler.dst + fileName
 	err := defaultSaveHandler.context.SaveUploadedFile(file, filePath)
 	if err != nil {
-		Get("logger").(*logrus.Logger).Error(err)
+		Get("logger").(*logrus.Logger).WithField("log_type", "pkg.app.upload").Error(err)
 		return ""
 	} else {
 		return defaultSaveHandler.prefix + filePath
@@ -180,12 +180,6 @@ func Upload(key string, saveHandler SaveHandler, allowedTyp ...string) gin.Handl
 					if typAllow {
 						fileName := strconv.Itoa(int(unique.Id())) + "." + fileType
 						data[formKey] = append(data[formKey], saveHandler.Save(file, fileName))
-						//err := context.SaveUploadedFile(file, filePath)
-						//if err != nil {
-						//	log.Println(err)
-						//} else {
-						//	data[formKey] = append(data[formKey], prefix+filePath)
-						//}
 					}
 
 				}

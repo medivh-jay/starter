@@ -12,7 +12,7 @@ var passwordToken = server.Modes[server.Mode].PasswordToken
 func Hash(password string) string {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(passwordToken+password), bcrypt.DefaultCost)
 	if err != nil {
-		app.Logger().Error(err)
+		app.Logger().WithField("log_type", "pkg.password.password").Error(err)
 		return ""
 	}
 

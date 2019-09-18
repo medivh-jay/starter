@@ -47,7 +47,7 @@ func (config config) ElasticSearchConfig() *esConfig.Config {
 func Start() {
 	ES, err = elastic.NewClientFromConfig(conf.ElasticSearchConfig())
 	if err != nil {
-		app.Logger().Error(err)
+		app.Logger().WithField("log_type", "pkg.elastic.es").Error(err)
 	}
 }
 
@@ -55,7 +55,7 @@ func Start() {
 func Insert(index string, body interface{}) *elastic.IndexResponse {
 	rs, err := ES.Index().Index(index).BodyJson(body).Do(context.Background())
 	if err != nil {
-		app.Logger().Error("es write error: ", err)
+		app.Logger().WithField("log_type", "pkg.elastic.es").Error("es write error: ", err)
 	}
 
 	return rs
@@ -64,7 +64,7 @@ func Insert(index string, body interface{}) *elastic.IndexResponse {
 func InsertString(index string, body string) *elastic.IndexResponse {
 	rs, err := ES.Index().Index(index).BodyString(body).Do(context.Background())
 	if err != nil {
-		app.Logger().Error("es write error: ", err)
+		app.Logger().WithField("log_type", "pkg.elastic.es").Error("es write error: ", err)
 	}
 
 	return rs
