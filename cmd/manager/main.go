@@ -14,7 +14,6 @@ import (
 	"starter/pkg/mongo"
 	"starter/pkg/password"
 	"starter/pkg/permission"
-	"starter/pkg/queue"
 	"starter/pkg/server"
 )
 
@@ -28,14 +27,6 @@ import (
 func main() {
 	server.Mode = "manager"
 	middlewares.AuthEntity = entities.Staff{}
-
-	queue.NewConsumer().SetTopics("test").Do(func(consumer *kafka.Consumer, message *kafka.Message) {
-		var d map[string]interface{}
-		_ = jsoniter.Unmarshal(message.Value, &d)
-		fmt.Println(d)
-	})
-
-	_ = queue.NewProducer().Send("test", map[string]int{"a": 1, "b": 2})
 
 	// 在mongo连接上之后再操作
 	server.After = func(engine *gin.Engine) {
