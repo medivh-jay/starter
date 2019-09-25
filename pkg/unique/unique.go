@@ -2,7 +2,6 @@ package unique
 
 import (
 	"github.com/sony/sonyflake"
-	"starter/pkg/app"
 	"time"
 )
 
@@ -14,7 +13,6 @@ var flake = sonyflake.NewSonyflake(sonyflake.Settings{
 func Id() uint64 {
 	id, err := flake.NextID()
 	if err != nil {
-		app.Logger().WithField("log_type", "pkg.unique.unique").Error(err)
 		return 0
 	}
 	return id

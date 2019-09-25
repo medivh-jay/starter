@@ -5,8 +5,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"starter/internal/entities"
 	"starter/pkg/app"
+	"starter/pkg/database/mongo"
 	"starter/pkg/middlewares"
-	"starter/pkg/mongo"
 	"starter/pkg/password"
 	"starter/pkg/validator"
 )

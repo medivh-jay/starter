@@ -5,8 +5,8 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"starter/pkg/database/mongo"
 	"starter/pkg/middlewares"
-	"starter/pkg/mongo"
 	"starter/pkg/password"
 	"time"
 )

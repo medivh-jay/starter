@@ -1,0 +1,13 @@
+[Hello]
+description = "这是一个示例的翻译"
+one = "{{.name}}有{{.count}}只猫"
+other = "{{.name}}有很多猫"
+[World]
+description = "测试"
+one = "这里是中文,这个翻译没有英文"
+other = "这里是中文,这个翻译没有英文{{.hello}}"
+["i18n.test"]
+description = "i18n.测试"
+one = "i18n.测试 one"
+few = "i18n.测试 few"
+other = "i18n.测试.other"

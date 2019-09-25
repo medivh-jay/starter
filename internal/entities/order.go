@@ -1,6 +1,6 @@
 package entities
 
-import "starter/pkg/orm"
+import "starter/pkg/database/orm"
 
 // MySQL 示例
 type Order struct {

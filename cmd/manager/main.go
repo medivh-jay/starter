@@ -1,17 +1,14 @@
 package main
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
-	jsoniter "github.com/json-iterator/go"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
 	"starter/internal/entities"
 	"starter/internal/manager"
 	"starter/pkg/app"
+	"starter/pkg/database/mongo"
 	"starter/pkg/middlewares"
-	"starter/pkg/mongo"
 	"starter/pkg/password"
 	"starter/pkg/permission"
 	"starter/pkg/server"

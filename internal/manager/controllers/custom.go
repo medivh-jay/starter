@@ -3,7 +3,7 @@ package controllers
 import (
 	"github.com/gin-gonic/gin"
 	"starter/pkg/app"
-	"starter/pkg/managers"
+	"starter/pkg/database/managers"
 )
 
 type CustomOrder struct {

@@ -7,7 +7,7 @@ import (
 	managerMiddleWares "starter/internal/manager/middlewares"
 	"starter/pkg/app"
 	"starter/pkg/captcha"
-	"starter/pkg/managers"
+	"starter/pkg/database/managers"
 	"starter/pkg/middlewares"
 	"starter/pkg/permission"
 	"starter/pkg/sessions"

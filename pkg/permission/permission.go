@@ -6,8 +6,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net/http"
 	"starter/pkg/app"
-	"starter/pkg/managers"
-	"starter/pkg/mongo"
+	"starter/pkg/database/managers"
+	"starter/pkg/database/mongo"
 )
 
 type Role struct {

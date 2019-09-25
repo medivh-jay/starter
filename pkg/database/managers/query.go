@@ -7,7 +7,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	mgoBson "gopkg.in/mgo.v2/bson"
 	"reflect"
-	"starter/pkg/orm"
+	orm2 "starter/pkg/database/orm"
 	"strconv"
 	"strings"
 )
@@ -18,7 +18,7 @@ type MysqlQuery struct {
 	params    []interface{}
 }
 
-var databaseTyp = reflect.TypeOf(orm.Database{})
+var databaseTyp = reflect.TypeOf(orm2.Database{})
 
 func (query *MysqlQuery) createTagQuery(entityTyp reflect.Type, ctx *gin.Context) {
 	for i := 0; i < entityTyp.NumField(); i++ {

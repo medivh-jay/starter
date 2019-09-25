@@ -1,0 +1,10 @@
+[Hello]
+description = "这是一个示例的翻译"
+one = "{{.name}} has {{.count}} cat."
+few = "{{.name}} has few cat"
+other = "{{.name}} has {{.count}} cats."
+["i18n.test"]
+description = "i18n.test"
+one = "i18n.test one"
+few = "i18n.test few"
+other = "i18n.other"

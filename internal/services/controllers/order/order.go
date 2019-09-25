@@ -4,7 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"starter/internal/entities"
 	"starter/pkg/app"
-	"starter/pkg/orm"
+	"starter/pkg/database/orm"
 	"starter/pkg/validator"
 )
 

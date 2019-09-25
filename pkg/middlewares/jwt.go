@@ -6,6 +6,7 @@ import (
 	"github.com/pkg/errors"
 	"net/http"
 	"starter/pkg/app"
+	"starter/pkg/database"
 	"starter/pkg/server"
 )
 
@@ -23,7 +24,7 @@ type claims struct {
 
 // 参与 jwt 数据表结构体需要实现这些接口
 type AuthInterface interface {
-	app.Table
+	database.Table
 	GetTopic() interface{}                         // 返回唯一信息
 	FindByTopic(topic interface{}) AuthInterface   // 根据唯一信息标识获取数据信息, 比如根据用户id获取用户信息,需要注意传入的数据类型
 	GetCheckData() string                          // 获取验证信息, jwt加密时, 改信息会一起进行加密, 解密时会解出来然后调用 Check 验证该信息的正确性, 如果是其他数据类型直接转string，比如是个结构体或者map, 直接转为json string

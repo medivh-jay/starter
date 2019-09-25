@@ -17,8 +17,8 @@ require (
 	github.com/fastly/go-utils v0.0.0-20180712184237-d95a45783239 // indirect
 	github.com/gin-contrib/sessions v0.0.0-20190512062852-3cb4c4f2d615
 	github.com/gin-gonic/gin v1.4.0
-	github.com/go-openapi/spec v0.19.2 // indirect
-	github.com/go-openapi/swag v0.19.5 // indirect
+	github.com/go-openapi/jsonreference v0.19.3 // indirect
+	github.com/go-openapi/spec v0.19.3 // indirect
 	github.com/go-playground/locales v0.12.1
 	github.com/go-playground/universal-translator v0.16.0
 	github.com/go-redis/redis v6.15.2+incompatible
@@ -29,6 +29,7 @@ require (
 	github.com/leodido/go-urn v1.1.0 // indirect
 	github.com/lestrrat-go/file-rotatelogs v2.2.0+incompatible
 	github.com/lestrrat-go/strftime v0.0.0-20190725011945-5c849dd2c51d // indirect
+	github.com/mailru/easyjson v0.7.0 // indirect
 	github.com/medivh-jay/lfshook v0.0.0-20180920164130-b9218ef580f5
 	github.com/mojocn/base64Captcha v0.0.0-20190801020520-752b1cd608b2
 	github.com/olivere/elastic/v7 v7.0.6
@@ -44,10 +45,12 @@ require (
 	github.com/xdg/scram v0.0.0-20180814205039-7eeb5667e42c // indirect
 	github.com/xdg/stringprep v1.0.0 // indirect
 	go.mongodb.org/mongo-driver v1.0.4
-	golang.org/x/crypto v0.0.0-20190829043050-9756ffdc2472
-	golang.org/x/net v0.0.0-20190827160401-ba9fcec4b297 // indirect
-	golang.org/x/sys v0.0.0-20190904154756-749cb33beabd // indirect
-	golang.org/x/tools v0.0.0-20190905035308-adb45749da8e // indirect
+	golang.org/x/crypto v0.0.0-20190923035154-9ee001bba392
+	golang.org/x/net v0.0.0-20190923162816-aa69164e4478 // indirect
+	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
+	golang.org/x/sys v0.0.0-20190924154521-2837fb4f24fe // indirect
+	golang.org/x/text v0.3.2
+	golang.org/x/tools v0.0.0-20190925020647-22afafe3322a // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 	gopkg.in/confluentinc/confluent-kafka-go.v1 v1.1.0
 	gopkg.in/go-playground/validator.v9 v9.29.1

@@ -22,11 +22,6 @@ type Services struct {
 	services map[string]interface{}
 }
 
-// 数据表结构体必须实现此接口
-type Table interface {
-	TableName() string
-}
-
 type response struct {
 	Code    int         `json:"code"`    // 状态码,这个状态码是与前端和APP约定的状态码,非HTTP状态码
 	Data    interface{} `json:"data"`    // 返回数据
@@ -39,6 +34,7 @@ func (rsp *response) End(c *gin.Context, httpStatus ...int) {
 	if len(httpStatus) > 0 {
 		status = httpStatus[0]
 	}
+
 	rsp.Message = Translate(c.DefaultQuery("lang", "zh-cn"), rsp.Message)
 	c.JSON(status, rsp)
 }
@@ -104,8 +100,9 @@ func Logger() *logrus.Logger {
 }
 
 // 注册其他包的服务
-func Register(name string, service interface{}) {
+func Register(name string, service interface{}) interface{} {
 	services.register(name, service)
+	return service
 }
 
 // 注册其他包的服务
