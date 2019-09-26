@@ -6,9 +6,10 @@ import (
 	"sync"
 )
 
+// CreateResultParams 创建订单成功之后返回的数据结构
 type CreateResultParams struct {
 	State         bool   `json:"state"`          // 订单创建状态
-	PaymentId     string `json:"payment_id"`     // 创建成功的话，就是服务器的唯一订单号,需要保存
+	PaymentID     string `json:"payment_id"`     // 创建成功的话，就是服务器的唯一订单号,需要保存
 	QrCode        string `json:"qr_code"`        // 可能会有二维码，这里就是二维码的字符串信息
 	PaymentLink   string `json:"payment_link"`   // 可能会有充值链接,这里就是充值链接，直接打开就调起来充值的那种
 	PaymentParams string `json:"payment_params"` // 可能某些充值平台在手机上调起充值方式比较妖孽，需要一串参数，就是这个
@@ -20,6 +21,7 @@ var (
 	drivers   = make(map[string]Payment)
 )
 
+// Payment 支付对象实现该接口方法
 type Payment interface {
 	/* 对渠道商创建一笔支付订单 */
 	/* 参数 */
@@ -38,7 +40,7 @@ type Payment interface {
 	/* 返回值 */
 	/*   state: 充值是否成功
 	/*   total: 充值成功的话，充值成功了多少钱，单位：分 */
-	CheckRechargeState(paymentId string) (state bool, total int)
+	CheckRechargeState(paymentID string) (state bool, total int)
 
 	/* 渠道异步通知 */
 	/* 参数 */
@@ -47,7 +49,7 @@ type Payment interface {
 	/*   state: 充值是否成功 */
 	/*   paymentId: 订单id */
 	/*   total: 充值成功的话，充值成功了多少钱，单位：分 */
-	Notify(rep http.ResponseWriter, req *http.Request) (state bool, paymentId string, total int)
+	Notify(rep http.ResponseWriter, req *http.Request) (state bool, paymentID string, total int)
 
 	// 这个接口是用来处理充值平台的异步回调的
 	AckNotify(rep http.ResponseWriter)
@@ -56,12 +58,13 @@ type Payment interface {
 	/*    退款只能对充值订单发起退款申请,资金将会按充值原路退回 */
 	/* 参数 */
 	/*   paymentId: 订单id */
-	Refund(paymentId string) interface{}
+	Refund(paymentID string) interface{}
 
 	// APP 支付调用
 	SdkPay(id, title, body string, total int) CreateResultParams
 }
 
+// Register 将自己实现的支付操作注册进来,方便统一调用
 func Register(name string, driver Payment) {
 	driversMu.Lock()
 	defer driversMu.Unlock()
@@ -73,6 +76,7 @@ func Register(name string, driver Payment) {
 	drivers[name] = driver
 }
 
+// Get 根据注册时传入的name获取对象
 func Get(name string) Payment {
 	if driver, ok := drivers[name]; ok {
 		return driver

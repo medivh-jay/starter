@@ -9,10 +9,9 @@ import (
 	"strings"
 )
 
-type SectionEngine int
-
 type (
-	Parse interface {
+	// ParseInterface List 接口区间查询解析
+	ParseInterface interface {
 		// 解析为数据库查询语句, mongo 返回 bson.M ， 例如 { "key":{"$lte": 123, "$get": 111} }
 		// MySQL 返回 SQL 字符串 例如 key >= 111 and key <= 123
 		Parse(engine EntityTyp) interface{}
@@ -26,51 +25,69 @@ type (
 		SetEnd(end int)
 	}
 
-	// 数据库字段区间查询语句生成和解析
+	// Sections 数据库字段区间查询语句生成和解析
 	Sections struct {
-		queries []Parse
+		queries []ParseInterface
 		Engine  EntityTyp
 	}
 
-	// 大于等于
+	// GteQuery 大于等于
 	GteQuery struct {
-		Key    string        // 区间查询 key
-		Begin  int           // 区间查询开始值
-		Engine SectionEngine // 数据库
+		Key   string // 区间查询 key
+		Begin int    // 区间查询开始值
 	}
 
-	// 小于等于
+	// LteQuery 小于等于
 	LteQuery struct {
-		Key    string        // 区间查询 key
-		End    int           // 区间查询结束值
-		Engine SectionEngine // 数据库
+		Key string // 区间查询 key
+		End int    // 区间查询结束值
 	}
 
-	// 大于等于和小于等于
+	// GteLteQuery 大于等于和小于等于
 	GteLteQuery struct {
-		Key    string        // 区间查询 key
-		Begin  int           // 区间查询开始值
-		End    int           // 区间查询结束值
-		Engine SectionEngine // 数据库
+		Key   string // 区间查询 key
+		Begin int    // 区间查询开始值
+		End   int    // 区间查询结束值
 	}
 )
 
-func (gteQuery *GteQuery) SetKey(key string)  { gteQuery.Key = key }
-func (gteQuery *GteQuery) GetKey() string     { return gteQuery.Key }
+// SetKey 设置查询的字段
+func (gteQuery *GteQuery) SetKey(key string) { gteQuery.Key = key }
+
+// GetKey 获取查询的字段
+func (gteQuery *GteQuery) GetKey() string { return gteQuery.Key }
+
+// SetBegin 设置区间开始值
 func (gteQuery *GteQuery) SetBegin(begin int) { gteQuery.Begin = begin }
-func (gteQuery *GteQuery) SetEnd(end int)     {}
 
-func (lteQuery *LteQuery) SetKey(key string)  { lteQuery.Key = key }
-func (lteQuery *LteQuery) GetKey() string     { return lteQuery.Key }
+// SetEnd 设置区间结束值
+func (gteQuery *GteQuery) SetEnd(end int) {}
+
+// SetKey 设置查询的字段
+func (lteQuery *LteQuery) SetKey(key string) { lteQuery.Key = key }
+
+// GetKey 获取查询的字段
+func (lteQuery *LteQuery) GetKey() string { return lteQuery.Key }
+
+// SetBegin 设置区间开始值
 func (lteQuery *LteQuery) SetBegin(begin int) {}
-func (lteQuery *LteQuery) SetEnd(end int)     { lteQuery.End = end }
 
-func (gteLteQuery *GteLteQuery) SetKey(key string)  { gteLteQuery.Key = key }
-func (gteLteQuery *GteLteQuery) GetKey() string     { return gteLteQuery.Key }
+// SetEnd 设置区间结束值
+func (lteQuery *LteQuery) SetEnd(end int) { lteQuery.End = end }
+
+// SetKey 设置查询的字段
+func (gteLteQuery *GteLteQuery) SetKey(key string) { gteLteQuery.Key = key }
+
+// GetKey 获取查询的字段
+func (gteLteQuery *GteLteQuery) GetKey() string { return gteLteQuery.Key }
+
+// SetBegin 设置区间开始值
 func (gteLteQuery *GteLteQuery) SetBegin(begin int) { gteLteQuery.Begin = begin }
-func (gteLteQuery *GteLteQuery) SetEnd(end int)     { gteLteQuery.End = end }
 
-// 转为数据库查询语句
+// SetEnd 设置区间结束值
+func (gteLteQuery *GteLteQuery) SetEnd(end int) { gteLteQuery.End = end }
+
+// Parse 转为数据库查询语句
 func (sections Sections) Parse() interface{} {
 	switch sections.Engine {
 	case Mongo:
@@ -103,6 +120,7 @@ func (sections Sections) Parse() interface{} {
 	return nil
 }
 
+// Parse 转为指定数据库驱动的查询语句
 func (gteQuery *GteQuery) Parse(engine EntityTyp) interface{} {
 	switch engine {
 	case Mysql:
@@ -115,6 +133,7 @@ func (gteQuery *GteQuery) Parse(engine EntityTyp) interface{} {
 	return nil
 }
 
+// Parse 转为指定数据库驱动的查询语句
 func (lteQuery *LteQuery) Parse(engine EntityTyp) interface{} {
 	switch engine {
 	case Mysql:
@@ -127,6 +146,7 @@ func (lteQuery *LteQuery) Parse(engine EntityTyp) interface{} {
 	return nil
 }
 
+// Parse 转为指定数据库驱动的查询语句
 func (gteLteQuery *GteLteQuery) Parse(engine EntityTyp) interface{} {
 	switch engine {
 	case Mysql:
@@ -139,7 +159,7 @@ func (gteLteQuery *GteLteQuery) Parse(engine EntityTyp) interface{} {
 	return nil
 }
 
-// 从URL中取出section，并解析为Sections结构体
+// ParseSectionParams 从URL中取出section，并解析为Sections结构体
 // 支持多个字段
 //  格式: 大于等于 section=key:value
 //  格式: 小于等于 section=-key:value
@@ -149,7 +169,7 @@ func (gteLteQuery *GteLteQuery) Parse(engine EntityTyp) interface{} {
 //  注意: 值类型必须是整型
 func ParseSectionParams(c *gin.Context, typ EntityTyp) Sections {
 	sections := c.Request.URL.Query()["section"]
-	var sq = Sections{queries: make([]Parse, len(sections))}
+	var sq = Sections{queries: make([]ParseInterface, len(sections))}
 	sq.Engine = typ
 	i := 0
 

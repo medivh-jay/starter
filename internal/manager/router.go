@@ -13,6 +13,7 @@ import (
 	"starter/pkg/sessions"
 )
 
+// GetEngine 设置路由的主方法,示例
 func GetEngine(engine *gin.Engine) {
 	// 静态资源路径, 这里只是临时写了一个文件夹作为示例
 	engine.Static("/test", "./test")
@@ -25,7 +26,7 @@ func GetEngine(engine *gin.Engine) {
 
 	engine.GET("/captcha", func(context *gin.Context) {
 		cpat := captcha.New("medivh")
-		app.NewResponse(app.Success, gin.H{"content": cpat.ToBase64EncodeString(), "captcha_id": cpat.CaptchaId}).End(context)
+		app.NewResponse(app.Success, gin.H{"content": cpat.ToBase64EncodeString(), "captcha_id": cpat.CaptchaID}).End(context)
 	})
 
 	engine.POST("/captcha", func(context *gin.Context) {
@@ -34,7 +35,7 @@ func GetEngine(engine *gin.Engine) {
 	})
 
 	engine.Use(middlewares.VerifyAuth)
-	sessions.Start(engine)
+	sessions.Inject(engine)
 
 	engine.GET("/staffs/info", controllers.StaffInfo)
 
@@ -56,5 +57,5 @@ func GetEngine(engine *gin.Engine) {
 		Start(engine)
 
 	// 将权限验证数据表的CURD接口进行注册
-	permission.Start(engine)
+	permission.Inject(engine)
 }

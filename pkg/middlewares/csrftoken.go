@@ -33,6 +33,7 @@ func generateToken() string {
 	return base64.URLEncoding.EncodeToString(token)
 }
 
+// CsrfToken 对外中间件
 func CsrfToken(ctx *gin.Context) {
 	once.Do(func() {
 		_ = app.Config().Bind("application", "sessions", &conf)

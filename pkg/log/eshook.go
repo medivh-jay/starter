@@ -11,13 +11,16 @@ import (
 )
 
 var (
+	// ErrCannotCreateIndex 创建index错误
 	ErrCannotCreateIndex = fmt.Errorf("cannot create index")
 )
 
+// IndexNameFunc 自定义生成index名称方法
 type IndexNameFunc func() string
 
 type fireFunc func(entry *logrus.Entry, hook *ElasticHook) error
 
+// ElasticHook hook 结构体, 包含hook的具体es连接信息
 type ElasticHook struct {
 	client    *elastic.Client
 	host      string
@@ -36,26 +39,32 @@ type message struct {
 	Level     string
 }
 
+// NewElasticHook 获得一个默认的es日志钩子
 func NewElasticHook(client *elastic.Client, host string, level logrus.Level, index string) (*ElasticHook, error) {
 	return NewElasticHookWithFunc(client, host, level, func() string { return index })
 }
 
+// NewAsyncElasticHook 获得一个异步钩子, 这个方法得到的写入hook 将使用协程写入
 func NewAsyncElasticHook(client *elastic.Client, host string, level logrus.Level, index string) (*ElasticHook, error) {
 	return NewAsyncElasticHookWithFunc(client, host, level, func() string { return index })
 }
 
+// NewBulkProcessorElasticHook 获得一个批量写入的hook
 func NewBulkProcessorElasticHook(client *elastic.Client, host string, level logrus.Level, index string) (*ElasticHook, error) {
 	return NewBulkProcessorElasticHookWithFunc(client, host, level, func() string { return index })
 }
 
+// NewElasticHookWithFunc 获取一个默认hook，传入自定义index方法
 func NewElasticHookWithFunc(client *elastic.Client, host string, level logrus.Level, indexFunc IndexNameFunc) (*ElasticHook, error) {
 	return newHookFuncAndFireFunc(client, host, level, indexFunc, syncFireFunc)
 }
 
+// NewAsyncElasticHookWithFunc 获取一个新的异步写入hook， 传入自定义index方法
 func NewAsyncElasticHookWithFunc(client *elastic.Client, host string, level logrus.Level, indexFunc IndexNameFunc) (*ElasticHook, error) {
 	return newHookFuncAndFireFunc(client, host, level, indexFunc, asyncFireFunc)
 }
 
+// NewBulkProcessorElasticHookWithFunc 获得一个批量写入的hook
 func NewBulkProcessorElasticHookWithFunc(client *elastic.Client, host string, level logrus.Level, indexFunc IndexNameFunc) (*ElasticHook, error) {
 	fireFunc, err := makeBulkFireFunc(client)
 	if err != nil {
@@ -110,6 +119,7 @@ func newHookFuncAndFireFunc(client *elastic.Client, host string, level logrus.Le
 	}, nil
 }
 
+// Fire 实现 hook 方法
 func (hook *ElasticHook) Fire(entry *logrus.Entry) error {
 	return func(hook *ElasticHook, entry *logrus.Entry) error {
 		return hook.fireFunc(entry, hook)
@@ -159,10 +169,12 @@ func makeBulkFireFunc(client *elastic.Client) (fireFunc, error) {
 	}, err
 }
 
+// Levels 获取写入的日志级别
 func (hook *ElasticHook) Levels() []logrus.Level {
 	return hook.levels
 }
 
+// Cancel 关闭hook
 func (hook *ElasticHook) Cancel() {
 	hook.ctxCancel()
 }

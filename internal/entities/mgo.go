@@ -2,9 +2,9 @@ package entities
 
 import "gopkg.in/mgo.v2/bson"
 
-// mgo 驱动
+// Mgo 使用 mgo 驱动的示例
 type Mgo struct {
-	Id        bson.ObjectId `json:"_id" bson:"_id"`
+	ID        bson.ObjectId `json:"_id" bson:"_id"`
 	Username  string        `json:"username" bson:"username" form:"username" binding:"max=12"`
 	Password  string        `json:"-" bson:"password" form:"password"`
 	Members   []string      `json:"members" bson:"members" form:"members[]"`
@@ -13,6 +13,7 @@ type Mgo struct {
 	UpdatedAt int64         `json:"updated_at" bson:"updated_at"`
 }
 
+// TableName 获取表名
 func (Mgo) TableName() string {
 	return "mgo"
 }

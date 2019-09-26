@@ -19,39 +19,44 @@ type fileTypeMap struct {
 	sync.Once
 }
 
+// SaveHandler 自定义文件上传之后的保存操作
 type SaveHandler interface {
 	// 保存文件并返回文件最终路径
 	Save(file *multipart.FileHeader, fileName string) string
 }
 
-// 默认文件保存器
+// DefaultSaveHandler 默认文件保存器
 type DefaultSaveHandler struct {
 	prefix  string
 	dst     string
 	context *gin.Context
 }
 
+// SetDst 设置保存位置
 func (defaultSaveHandler *DefaultSaveHandler) SetDst(dst string) *DefaultSaveHandler {
 	defaultSaveHandler.dst = dst
 	return defaultSaveHandler
 }
 
+// SetPrefix 设置前缀
 func (defaultSaveHandler *DefaultSaveHandler) SetPrefix(prefix string) *DefaultSaveHandler {
 	defaultSaveHandler.prefix = prefix
 	return defaultSaveHandler
 }
 
+// Save 保存
 func (defaultSaveHandler *DefaultSaveHandler) Save(file *multipart.FileHeader, fileName string) string {
 	filePath := defaultSaveHandler.dst + fileName
 	err := defaultSaveHandler.context.SaveUploadedFile(file, filePath)
 	if err != nil {
 		Get("logger").(*logrus.Logger).WithField("log_type", "pkg.app.upload").Error(err)
 		return ""
-	} else {
-		return defaultSaveHandler.prefix + filePath
 	}
+
+	return defaultSaveHandler.prefix + filePath
 }
 
+// FileType 文件类型
 var FileType = new(fileTypeMap)
 
 func (fileTypeMap *fileTypeMap) lazyLoad() {
@@ -152,7 +157,7 @@ func (fileTypeMap *fileTypeMap) GetFileType(fSrc []byte) string {
 	return fileType
 }
 
-// 文件上传公共方法
+// Upload 文件上传公共方法
 //  key 上传文件的表单name, 如果是多文件需要加上中括号[]
 //  dst 存放路径 注意:无论这里传什么路径, 最后边都会追加 filename.xxx
 func Upload(key string, saveHandler SaveHandler, allowedTyp ...string) gin.HandlerFunc {
@@ -178,7 +183,7 @@ func Upload(key string, saveHandler SaveHandler, allowedTyp ...string) gin.Handl
 						typAllow = typAllow || typ == fileType
 					}
 					if typAllow {
-						fileName := strconv.Itoa(int(unique.Id())) + "." + fileType
+						fileName := strconv.Itoa(int(unique.ID())) + "." + fileType
 						data[formKey] = append(data[formKey], saveHandler.Save(file, fileName))
 					}
 

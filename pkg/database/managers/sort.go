@@ -1,4 +1,4 @@
-// url(?||&)sorts=-name,age,+level
+// Package managers url(?||&)sorts=-name,age,+level
 package managers
 
 import (
@@ -9,10 +9,12 @@ import (
 	"strings"
 )
 
+// Sort 排序字段解析接口
 type Sort interface {
 	Parse(ctx *gin.Context) interface{}
 }
 
+// NewSorter 得到一个新的解析实例
 func NewSorter(driver EntityTyp) Sort {
 	switch driver {
 	case Mysql:

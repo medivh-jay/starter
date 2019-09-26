@@ -1,4 +1,4 @@
-// 国际化
+// Package i18n i18n 国际化
 //  example:
 //  bundle := i18n.NewBundle(language.Chinese).LoadFiles("./locales", toml.Unmarshal)
 //	log.Println(bundle.NewPrinter(language.English).Translate("Hello", i18n.Data{"name": "medivh", "count": 156}, 156))
@@ -17,10 +17,12 @@ import (
 	"text/template"
 )
 
+// Data 自定义的需要被模板解析的信息, 在不需要传入结构体时可以使用此类型
 type Data map[string]interface{}
 
+// Message 具体翻译模板的内容
 type Message struct {
-	Id    string             // message key
+	ID    string             // message key
 	Other *template.Template // message template
 	Zero  *template.Template // message template
 	One   *template.Template // message template
@@ -29,20 +31,27 @@ type Message struct {
 	Many  *template.Template // message template
 }
 
+// Bundle 国际化对外操作结构体
 type Bundle struct {
 	mu         sync.Mutex
 	defaultTag language.Tag
 	messages   map[language.Tag]map[string]*Message
 }
 
+// Messages 所有的模板信息
 type Messages map[language.Tag]map[string]*Message
+
+// Unmarshal 模板文本decode方法
 type Unmarshal func(data []byte, v interface{}) error
 
 type few struct {
 	min, max int
 }
 
-type printer struct {
+// Printer 一个新的message translate 对象, 一般不需要调用他
+// 但是不太明白 golint ， 有的结构体本来是不需要外部来new出来的, 只是暴露了一些外部可调用方法, 结构体本身由包内部方法初始化
+// 但是 golint 说这是不对的，不明白这么设计为何不对
+type Printer struct {
 	few        few // In this range belongs to "few"
 	many       int // Greater than or equal to this value is many
 	messages   Messages
@@ -50,6 +59,7 @@ type printer struct {
 	defaultTag language.Tag
 }
 
+// NewBundle 得到一个写的国际化实例
 func NewBundle(tag language.Tag) *Bundle {
 	return &Bundle{
 		defaultTag: tag,
@@ -57,12 +67,12 @@ func NewBundle(tag language.Tag) *Bundle {
 	}
 }
 
-// add message
+// SetMessage add message
 func (bundle *Bundle) SetMessage(tag language.Tag, key string, message map[string]string) {
 	bundle.mu.Lock()
 	defer bundle.mu.Unlock()
 	bundle.messages[tag][key] = &Message{
-		Id:    key,
+		ID:    key,
 		Other: createMessageTemplate(key, message["other"]),
 		Zero:  createMessageTemplate(key, message["zero"]),
 		One:   createMessageTemplate(key, message["one"]),
@@ -72,7 +82,7 @@ func (bundle *Bundle) SetMessage(tag language.Tag, key string, message map[strin
 	}
 }
 
-// walk file dir and load messages
+// LoadFiles walk file dir and load messages
 // language file like
 //  + path
 //  | -- zh.toml
@@ -93,20 +103,20 @@ func (bundle *Bundle) LoadFiles(path string, unmarshaler Unmarshal) *Bundle {
 		}
 		tag := language.MustParse(lang)
 		bundle.messages[tag] = make(map[string]*Message)
-		for messageId, content := range data {
-			bundle.SetMessage(tag, messageId, content)
+		for messageID, content := range data {
+			bundle.SetMessage(tag, messageID, content)
 		}
 		return nil
 	})
 	return bundle
 }
 
-func createMessageTemplate(messageId, text string) *template.Template {
+func createMessageTemplate(messageID, text string) *template.Template {
 	if text == "" {
 		return nil
 	}
 
-	t, err := template.New(messageId).Parse(text)
+	t, err := template.New(messageID).Parse(text)
 	if err != nil {
 		return nil
 	}
@@ -114,22 +124,25 @@ func createMessageTemplate(messageId, text string) *template.Template {
 	return t
 }
 
-func (bundle *Bundle) NewPrinter(tag language.Tag) *printer {
-	return &printer{acceptTag: tag, defaultTag: bundle.defaultTag, messages: bundle.messages}
+// NewPrinter 根据传入语言tag获得具体翻译组件
+func (bundle *Bundle) NewPrinter(tag language.Tag) *Printer {
+	return &Printer{acceptTag: tag, defaultTag: bundle.defaultTag, messages: bundle.messages}
 }
 
-func (p *printer) SetFewRule(min, max int) *printer {
+// SetFewRule 自定义 few 信息模板的few规则, 在min-max范围内将使用few模板
+func (p *Printer) SetFewRule(min, max int) *Printer {
 	p.few = few{min, max}
 	return p
 }
 
-func (p *printer) SetManyRule(min int) *printer {
+// SetManyRule 自定义 Many信息模板规则，大于等于 min 将使用 many 模板
+func (p *Printer) SetManyRule(min int) *Printer {
 	p.many = min
 	return p
 }
 
-// data can be nil
-func (p *printer) Translate(key string, data interface{}, plurals ...int) string {
+// Translate 根据传入模板ID进行翻译, data can be nil
+func (p *Printer) Translate(key string, data interface{}, plurals ...int) string {
 	var rs bytes.Buffer
 	var err error
 	messages, ok := p.messages[p.acceptTag]
@@ -166,7 +179,7 @@ func (p *printer) Translate(key string, data interface{}, plurals ...int) string
 	return string(content)
 }
 
-func (p *printer) template(plural int, message *Message) *template.Template {
+func (p *Printer) template(plural int, message *Message) *template.Template {
 	var t *template.Template
 	if plural >= 0 && plural <= 2 {
 		t = [3]*template.Template{message.Zero, message.One, message.Two}[plural]

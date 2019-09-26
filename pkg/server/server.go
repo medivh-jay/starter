@@ -38,12 +38,16 @@ type (
 )
 
 var (
-	pidFile     = fmt.Sprintf("./%s.pid", app.Name())
-	Mode        string
-	After       func(engine *gin.Engine) // 在各项服务启动之后会执行的操作
+	pidFile = fmt.Sprintf("./%s.pid", app.Name())
+	// Mode 当前服务名, 暂时需要这么个东西, 按目前的结构获得指定配置信息等操作
+	Mode string
+	// After 在各项服务启动之后会执行的操作
+	After       func(engine *gin.Engine)
 	swagHandler gin.HandlerFunc
 	engine      = gin.New()
-	Modes       applications
+
+	// Modes 按目前的结构来说, 获取所有mode的application节点配置信息
+	Modes applications
 )
 
 func certInfo(module string) (string, string) {
@@ -66,7 +70,7 @@ func start() {
 	binding.Validator = new(validator.Validator)
 }
 
-// 启动服务
+// Run 启动服务
 func Run(service func(engine *gin.Engine)) {
 	lock := createPid()
 	defer lock.UnLock()

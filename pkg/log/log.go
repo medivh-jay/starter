@@ -14,9 +14,11 @@ import (
 )
 
 var (
+	// Terminal 默认终端log输出
 	Terminal = logrus.New()
-	Logger   = Terminal
-	config   logConfig
+	// Logger 对外 Logger 对象
+	Logger = Terminal
+	config logConfig
 )
 
 type logConfig struct {
@@ -92,6 +94,7 @@ retry:
 	Logger = es
 }
 
+// Start 启动日志服务
 func Start() {
 	_ = app.Config().Bind("application", "log", &config)
 	Terminal.SetFormatter(&logrus.TextFormatter{ForceColors: true})

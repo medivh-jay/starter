@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-// 全局允许跨域
+// CORS 全局允许跨域
 func CORS(c *gin.Context) {
 	if c.Request.Header.Get(`X-Requested-With`) != "" || c.Request.Header.Get(`Origin`) != "" {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", c.Request.Header.Get(`Origin`))
@@ -19,7 +19,6 @@ func CORS(c *gin.Context) {
 		c.AbortWithStatus(http.StatusOK)
 		c.Abort()
 		return
-	} else {
-		c.Next()
 	}
+	c.Next()
 }

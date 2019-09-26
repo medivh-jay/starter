@@ -11,22 +11,23 @@ import (
 	"sync"
 )
 
-// 配置
-type configuration struct {
+// Configuration 应用配置
+type Configuration struct {
 	configs map[string]map[string]interface{}
 	once    sync.Once
 }
 
 var (
-	config = new(configuration).singleLoad()
+	config = new(Configuration).singleLoad()
 	json   = jsoniter.Config{EscapeHTML: true, TagKey: "toml"}.Froze()
 )
 
-func Config() *configuration {
+// Config 得到config对象
+func Config() *Configuration {
 	return config
 }
 
-func (conf *configuration) copy(node string, value map[string]interface{}) {
+func (conf *Configuration) copy(node string, value map[string]interface{}) {
 	for key, val := range value {
 		if conf.configs[node] == nil {
 			conf.configs[node] = make(map[string]interface{})
@@ -35,7 +36,7 @@ func (conf *configuration) copy(node string, value map[string]interface{}) {
 	}
 }
 
-func (conf *configuration) walk(path string, info os.FileInfo, err error) error {
+func (conf *Configuration) walk(path string, info os.FileInfo, err error) error {
 	if err == nil {
 		if !info.IsDir() {
 			var err error
@@ -54,7 +55,7 @@ func (conf *configuration) walk(path string, info os.FileInfo, err error) error 
 	return nil
 }
 
-func (conf *configuration) singleLoad() *configuration {
+func (conf *Configuration) singleLoad() *Configuration {
 	conf.once.Do(func() {
 		conf.configs = make(map[string]map[string]interface{})
 		path, _ := filepath.Abs(fmt.Sprintf("./configs/%s/", gin.Mode()))
@@ -64,7 +65,11 @@ func (conf *configuration) singleLoad() *configuration {
 	return conf
 }
 
-func (conf *configuration) Bind(node, key string, obj interface{}) error {
+// Bind 将配置绑定到传入对象
+//  node 其实是配置文件的文件名
+//  key 是配置文件中的顶层key
+//  具体可查看该方法的其他包的使用
+func (conf *Configuration) Bind(node, key string, obj interface{}) error {
 	nodeVal, ok := conf.configs[node]
 	if !ok {
 		return nil
@@ -84,7 +89,7 @@ func (conf *configuration) Bind(node, key string, obj interface{}) error {
 	return conf.assignment(objVal, obj)
 }
 
-func (conf *configuration) assignment(val, obj interface{}) error {
+func (conf *Configuration) assignment(val, obj interface{}) error {
 	data, _ := json.Marshal(val)
 	return json.Unmarshal(data, obj)
 }

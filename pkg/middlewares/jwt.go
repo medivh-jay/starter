@@ -10,8 +10,9 @@ import (
 	"starter/pkg/server"
 )
 
-type claims struct {
-	Id        interface{} // 唯一id
+// Claims 生成token的结构体
+type Claims struct {
+	ID        interface{} // 唯一id
 	CheckData string      // 验证信息
 	jwt.StandardClaims
 }
@@ -22,7 +23,7 @@ type claims struct {
 //	ParseId func(string) interface{}
 //}
 
-// 参与 jwt 数据表结构体需要实现这些接口
+// AuthInterface 参与 jwt 数据表结构体需要实现这些接口
 type AuthInterface interface {
 	database.Table
 	GetTopic() interface{}                         // 返回唯一信息
@@ -32,37 +33,39 @@ type AuthInterface interface {
 	ExpiredAt() int64                              // 返回过期时间,时间戳
 }
 
+// AuthEntity  具体的jwt验证支持结构体, 需要在自己的应用中赋值指定
 var AuthEntity AuthInterface
 var (
-	AuthKey      = "users"
+	// AuthKey 在整个gin.Context 上线文中的 Get 操作的key名,可以获得 AuthEntity
+	AuthKey = "users"
+	// JwtHeaderKey jwt token 在HTTP请求中的header名
 	JwtHeaderKey = "JWT"
 )
 
-// 验证用户有效性的中间件
+// VerifyAuth 验证用户有效性的中间件
 func VerifyAuth(c *gin.Context) {
 	token := c.GetHeader(JwtHeaderKey)
 	if token != "" {
 		claims, err := ParseToken(token)
 		if err == nil {
-			var entity = AuthEntity.FindByTopic(claims.Id)
+			var entity = AuthEntity.FindByTopic(claims.ID)
 			if entity.Check(c, claims.CheckData) {
 				c.Set(AuthKey, entity) // 向下设置用户信息,控制器可直接获取
 				c.Header(JwtHeaderKey, token)
 				c.Next()
 				return
-			} else {
-				app.NewResponse(app.AuthFail, nil, app.AuthFailMessage).End(c, http.StatusUnauthorized)
-				c.Abort()
-				return
 			}
+			app.NewResponse(app.AuthFail, nil, app.AuthFailMessage).End(c, http.StatusUnauthorized)
+			c.Abort()
+			return
 		}
 	}
 	app.NewResponse(app.AuthFail, nil, app.AuthFailMessage).End(c, http.StatusUnauthorized)
 	c.Abort()
 }
 
-func newClaims(entity AuthInterface) claims {
-	return claims{
+func newClaims(entity AuthInterface) Claims {
+	return Claims{
 		entity.GetTopic(),
 		entity.GetCheckData(),
 		jwt.StandardClaims{
@@ -71,6 +74,7 @@ func newClaims(entity AuthInterface) claims {
 	}
 }
 
+// NewToken 根据传入的结构体(非空结构体)返回一个token
 func NewToken(entity AuthInterface) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, newClaims(entity))
 	rs, err := token.SignedString([]byte(server.Modes[server.Mode].JwtToken))
@@ -80,8 +84,9 @@ func NewToken(entity AuthInterface) (string, error) {
 	return rs, nil
 }
 
-func ParseToken(sign string) (*claims, error) {
-	token, err := jwt.ParseWithClaims(sign, &claims{}, func(token *jwt.Token) (i interface{}, e error) {
+// ParseToken 根据传入 token 得到 Claims 信息
+func ParseToken(sign string) (*Claims, error) {
+	token, err := jwt.ParseWithClaims(sign, &Claims{}, func(token *jwt.Token) (i interface{}, e error) {
 		return []byte(server.Modes[server.Mode].JwtToken), nil
 	})
 
@@ -89,7 +94,7 @@ func ParseToken(sign string) (*claims, error) {
 		return nil, err
 	}
 
-	if claims, ok := token.Claims.(*claims); ok && token.Valid {
+	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
 		return claims, nil
 	}
 

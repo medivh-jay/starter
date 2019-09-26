@@ -8,11 +8,12 @@ import (
 	"starter/pkg/validator"
 )
 
+// ListToVisitor get id
 type ListToVisitor struct {
-	Id string `form:"id" binding:"required,max=32"`
+	ID string `form:"id" binding:"required,max=32"`
 }
 
-// @Summary 订单
+// List @Summary 订单
 // @Tags 订单列表
 // @Produce  json
 // @Param    id        query    string     true      "订单id"
@@ -27,13 +28,11 @@ func List(ctx *gin.Context) {
 	}
 
 	var order entities.Order
-	result := orm.Slave().Where("id = ?", listToVisitor.Id).Find(&order)
+	result := orm.Slave().Where("id = ?", listToVisitor.ID).Find(&order)
 	if result.RowsAffected > 0 {
 		app.NewResponse(app.Success, order).End(ctx)
 		return
-	} else {
-		app.NewResponse(app.NotFound, nil).End(ctx)
-		return
 	}
-
+	app.NewResponse(app.NotFound, nil).End(ctx)
+	return
 }

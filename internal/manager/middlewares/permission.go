@@ -9,6 +9,7 @@ import (
 	"starter/pkg/permission"
 )
 
+// CheckPermission 验证用户权限, 这是自定义的结构体，这里只是示例
 func CheckPermission(context *gin.Context) {
 	staff, exists := context.Get(middlewares.AuthKey)
 	if !exists {
@@ -16,7 +17,7 @@ func CheckPermission(context *gin.Context) {
 		return
 	}
 
-	if permission.HasPermission(staff.(entities.Staff).Id.Hex(), context) {
+	if permission.HasPermission(staff.(entities.Staff).ID.Hex(), context) {
 		context.Next()
 		return
 	}

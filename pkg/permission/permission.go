@@ -10,8 +10,9 @@ import (
 	"starter/pkg/database/mongo"
 )
 
+// Role 角色
 type Role struct {
-	Id          primitive.ObjectID `json:"_id" bson:"_id"`
+	ID          primitive.ObjectID `json:"_id" bson:"_id"`
 	Name        string             `json:"name" bson:"name" form:"name" binding:"max=12"`       // 角色名称
 	Pid         string             `json:"pid" bson:"pid" form:"pid"`                           // 角色的父级角色id
 	Permissions []string           `json:"permissions" bson:"permissions" form:"permissions[]"` // 权限id列表
@@ -19,8 +20,9 @@ type Role struct {
 	UpdatedAt   int64              `json:"updated_at" bson:"updated_at"`
 }
 
+// Permission 权限列表
 type Permission struct {
-	Id         primitive.ObjectID  `json:"_id" bson:"_id"`
+	ID         primitive.ObjectID  `json:"_id" bson:"_id"`
 	Name       string              `json:"name" bson:"name" binding:"max=24" form:"name"`       // 权限名称
 	Path       string              `json:"path" bson:"path" form:"path"`                        // 资源定位路径
 	Method     string              `json:"method" bson:"method" form:"method"`                  // 请求方式
@@ -30,19 +32,26 @@ type Permission struct {
 	UpdatedAt  int64               `json:"updated_at" bson:"updated_at"`
 }
 
+// Binding 用户id与角色id的关系
 type Binding struct {
-	Id        primitive.ObjectID `json:"_id" bson:"_id"`
-	UserId    string             `json:"user_id" bson:"user_id" form:"user_id" `
-	RoleId    string             `json:"role_id" bson:"role_id" form:"role_id" `
+	ID        primitive.ObjectID `json:"_id" bson:"_id"`
+	UserID    string             `json:"user_id" bson:"user_id" form:"user_id" `
+	RoleID    string             `json:"role_id" bson:"role_id" form:"role_id" `
 	CreatedAt int64              `json:"created_at" bson:"created_at"`
 	UpdatedAt int64              `json:"updated_at" bson:"updated_at"`
 }
 
-func (Role) TableName() string       { return "roles" }
-func (Permission) TableName() string { return "permissions" }
-func (Binding) TableName() string    { return "binding" }
+// TableName 表名
+func (Role) TableName() string { return "roles" }
 
-func Start(router gin.IRoutes) {
+// TableName 表名
+func (Permission) TableName() string { return "permissions" }
+
+// TableName 表名
+func (Binding) TableName() string { return "binding" }
+
+// Inject 对managers注入该权限验证模块
+func Inject(router gin.IRoutes) {
 	managers.New().
 		Register(Role{}, managers.Mongo).
 		Register(Permission{}, managers.Mongo).
@@ -50,6 +59,7 @@ func Start(router gin.IRoutes) {
 		Start(router)
 }
 
+// GetPermissionsForUser 根据用户id获取用户权限
 func GetPermissionsForUser(id string) []Permission {
 	var binding Binding
 	err := mongo.Collection(binding).Where(bson.M{"user_id": id}).FindOne(&binding)
@@ -58,21 +68,21 @@ func GetPermissionsForUser(id string) []Permission {
 		return nil
 	}
 
-	roleId, _ := primitive.ObjectIDFromHex(binding.RoleId)
+	roleID, _ := primitive.ObjectIDFromHex(binding.RoleID)
 	var role Role
-	err = mongo.Collection(role).Where(bson.M{"_id": roleId}).FindOne(&role)
+	err = mongo.Collection(role).Where(bson.M{"_id": roleID}).FindOne(&role)
 	if err != nil {
 		app.Logger().WithField("log_type", "pkg.permission.permission").Error(err)
 		return nil
 	}
 
-	permissionIdList := make([]primitive.ObjectID, len(role.Permissions), len(role.Permissions))
+	permissionIDList := make([]primitive.ObjectID, len(role.Permissions), len(role.Permissions))
 	for k, v := range role.Permissions {
-		permissionIdList[k], _ = primitive.ObjectIDFromHex(v)
+		permissionIDList[k], _ = primitive.ObjectIDFromHex(v)
 	}
 
 	var permissions []Permission
-	mongo.Collection(Permission{}).Where(bson.M{"_id": bson.M{"$in": permissionIdList}}).FindMany(&permissions)
+	mongo.Collection(Permission{}).Where(bson.M{"_id": bson.M{"$in": permissionIDList}}).FindMany(&permissions)
 
 	return permissions
 }
@@ -92,6 +102,7 @@ func isRoot(id string, permissions []Permission) bool {
 	return false
 }
 
+// HasPermission 判断指定用户是否具有当前请求上下文的权限
 func HasPermission(id string, ctx *gin.Context) bool {
 	permissions := GetPermissionsForUser(id)
 	// root 用户拥有一切权限

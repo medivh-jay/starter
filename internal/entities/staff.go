@@ -11,9 +11,10 @@ import (
 	"time"
 )
 
-// mongo 表, 示例
+// Staff mongo 表, 示例
+// 也包含了实现 jwt 接口的示例
 type Staff struct {
-	Id            primitive.ObjectID `json:"_id" bson:"_id"`
+	ID            primitive.ObjectID `json:"_id" bson:"_id"`
 	Username      string             `json:"username" bson:"username" form:"username" binding:"max=12"`
 	Password      string             `json:"-" bson:"password" form:"password"`
 	Avatar        string             `json:"avatar" bson:"avatar" form:"avatar"`
@@ -26,12 +27,14 @@ type Staff struct {
 	UpdatedAt     int64              `json:"updated_at" bson:"updated_at"`
 }
 
+// PreOperation managers 包前置操作, 密码不为空时对密码进行hash操作
 func (staff *Staff) PreOperation() {
 	if staff.Password != "" {
 		staff.Password = password.Hash(staff.Password)
 	}
 }
 
+// Logged 登陆成功的操作
 func (staff *Staff) Logged(platform string) {
 	if staff.LoginAt == nil {
 		staff.LoginAt = make(map[string]int64)
@@ -40,26 +43,29 @@ func (staff *Staff) Logged(platform string) {
 	mongo.Collection(staff).UpdateOne(staff)
 }
 
+// TableName 获取表名
 func (Staff) TableName() string {
 	return "staffs"
 }
 
+// GetTopic 获取id
 func (staff Staff) GetTopic() interface{} {
-	return staff.Id
+	return staff.ID
 }
 
+// FindByTopic 根据id获取用户信息
 func (Staff) FindByTopic(topic interface{}) middlewares.AuthInterface {
 	var id primitive.ObjectID
 	var err error
 	var staff Staff
-	if jwtId, ok := topic.(string); ok {
-		id, err = primitive.ObjectIDFromHex(jwtId)
+	if jwtID, ok := topic.(string); ok {
+		id, err = primitive.ObjectIDFromHex(jwtID)
 		if err != nil {
 			return staff
 		}
 	} else {
-		if jwtId, ok := topic.(primitive.ObjectID); ok {
-			id = jwtId
+		if jwtID, ok := topic.(primitive.ObjectID); ok {
+			id = jwtID
 		}
 	}
 
@@ -67,16 +73,20 @@ func (Staff) FindByTopic(topic interface{}) middlewares.AuthInterface {
 	return staff
 }
 
+// GetCheckData 得到会被 jwt 加密的信息
 func (staff Staff) GetCheckData() string {
 	checkData, _ := jsoniter.MarshalToString(staff.LoginAt)
 	return checkData
 }
+
+// Check 检验信息是否正确
 func (staff Staff) Check(ctx *gin.Context, checkData string) bool {
 	var loginAt map[string]int64
 	_ = jsoniter.UnmarshalFromString(checkData, &loginAt)
 	return staff.LoginAt[ctx.DefaultQuery("platform", "web")] == loginAt[ctx.DefaultQuery("platform", "web")]
 }
 
+// ExpiredAt token 过期时间
 func (Staff) ExpiredAt() int64 {
 	return time.Now().Add(86400 * time.Second).Unix()
 }

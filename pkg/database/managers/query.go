@@ -12,6 +12,7 @@ import (
 	"strings"
 )
 
+// MysqlQuery MySQL List 列表的 query 参数解析
 type MysqlQuery struct {
 	entityTyp reflect.Type
 	statement string
@@ -40,6 +41,7 @@ func (query *MysqlQuery) createTagQuery(entityTyp reflect.Type, ctx *gin.Context
 	}
 }
 
+// GetQuery 获取解析之后的SQL 和 对应参数
 func (query *MysqlQuery) GetQuery(ctx *gin.Context) (statement string, params []interface{}) {
 	query.statement = ""
 	query.params = make([]interface{}, 0, 0)
@@ -59,33 +61,36 @@ func (query *MysqlQuery) GetQuery(ctx *gin.Context) (statement string, params []
 	return query.statement, query.params
 }
 
+// Limit 设置限制条数
 func (query *MysqlQuery) Limit(ctx *gin.Context) int {
 	limit := ctx.DefaultQuery("limit", "10")
 	num, _ := strconv.Atoi(limit)
 	return num
 }
 
-// 不提供 offset 操作
+// Offset 不提供 offset 操作
 func (query *MysqlQuery) Offset(ctx *gin.Context) int {
 	page := ctx.DefaultQuery("page", "1")
 	num, _ := strconv.Atoi(page)
 	return (num - 1) * (query.Limit(ctx))
 }
 
+// MongoQuery Mongo 的 List 数据 query 解析
 type MongoQuery struct {
 	entityTyp reflect.Type
 	query     bson.M
 }
 
+// GetQuery 获取参数
 func (query *MongoQuery) GetQuery(ctx *gin.Context) bson.M {
 
 	query.query = make(bson.M)
 	after, before := ctx.DefaultQuery("after_id", ""), ctx.DefaultQuery("before_id", "")
 	if after != "" {
-		query.query["_id"] = bson.M{"$gt": query.convertId(after)}
+		query.query["_id"] = bson.M{"$gt": query.convertID(after)}
 	}
 	if before != "" {
-		query.query["_id"] = bson.M{"$lt": query.convertId(before)}
+		query.query["_id"] = bson.M{"$lt": query.convertID(before)}
 	}
 
 	query.createTagQuery(query.entityTyp, ctx)
@@ -104,8 +109,8 @@ func (query *MongoQuery) createTagQuery(entityTyp reflect.Type, ctx *gin.Context
 				query.query[field] = val != ""
 			default:
 				if entityTyp.Field(i).Type == reflect.TypeOf(primitive.ObjectID{}) {
-					objectId, _ := primitive.ObjectIDFromHex(val)
-					query.query[field] = objectId
+					objectID, _ := primitive.ObjectIDFromHex(val)
+					query.query[field] = objectID
 				} else {
 					query.query[field] = val
 				}
@@ -114,27 +119,28 @@ func (query *MongoQuery) createTagQuery(entityTyp reflect.Type, ctx *gin.Context
 	}
 }
 
+// Limit 限制条数
 func (query *MongoQuery) Limit(ctx *gin.Context) int {
 	limit := ctx.DefaultQuery("limit", "10")
 	num, _ := strconv.Atoi(limit)
 	return num
 }
 
-func (query *MongoQuery) convertId(id string) interface{} {
-	fieldTyp, exists := query.entityTyp.FieldByName("Id")
+func (query *MongoQuery) convertID(id string) interface{} {
+	fieldTyp, exists := query.entityTyp.FieldByName("ID")
 	if !exists {
 		return id
 	}
 
 	if fieldTyp.Type == reflect.TypeOf(primitive.ObjectID{}) {
-		objectId, _ := primitive.ObjectIDFromHex(id)
-		return objectId
+		objectID, _ := primitive.ObjectIDFromHex(id)
+		return objectID
 	}
 
 	return id
 }
 
-// 不提供 offset 操作
+// Offset 不提供 offset 操作
 func (query *MongoQuery) Offset(ctx *gin.Context) int {
 	page := ctx.DefaultQuery("page", "1")
 	num, _ := strconv.Atoi(page)
@@ -142,20 +148,22 @@ func (query *MongoQuery) Offset(ctx *gin.Context) int {
 	//return 0
 }
 
+// MgoQuery mgo 的 List query 参数解析
 type MgoQuery struct {
 	entityTyp reflect.Type
 	query     mgoBson.M
 }
 
+// GetQuery 获取查询参数
 func (query *MgoQuery) GetQuery(ctx *gin.Context) mgoBson.M {
 
 	query.query = make(mgoBson.M)
 	after, before := ctx.DefaultQuery("after_id", ""), ctx.DefaultQuery("before_id", "")
 	if after != "" {
-		query.query["_id"] = bson.M{"$gt": query.convertId(after)}
+		query.query["_id"] = bson.M{"$gt": query.convertID(after)}
 	}
 	if before != "" {
-		query.query["_id"] = bson.M{"$lt": query.convertId(before)}
+		query.query["_id"] = bson.M{"$lt": query.convertID(before)}
 	}
 
 	query.createTagQuery(query.entityTyp, ctx)
@@ -174,8 +182,8 @@ func (query *MgoQuery) createTagQuery(entityTyp reflect.Type, ctx *gin.Context) 
 				query.query[field] = val != ""
 			default:
 				if entityTyp.Field(i).Type == reflect.TypeOf(mgoBson.ObjectId("")) {
-					objectId := mgoBson.ObjectIdHex(val)
-					query.query[field] = objectId
+					objectID := mgoBson.ObjectIdHex(val)
+					query.query[field] = objectID
 				} else {
 					query.query[field] = val
 				}
@@ -184,27 +192,28 @@ func (query *MgoQuery) createTagQuery(entityTyp reflect.Type, ctx *gin.Context) 
 	}
 }
 
+// Limit 限制条数
 func (query *MgoQuery) Limit(ctx *gin.Context) int {
 	limit := ctx.DefaultQuery("limit", "10")
 	num, _ := strconv.Atoi(limit)
 	return num
 }
 
-func (query *MgoQuery) convertId(id string) interface{} {
-	fieldTyp, exists := query.entityTyp.FieldByName("Id")
+func (query *MgoQuery) convertID(id string) interface{} {
+	fieldTyp, exists := query.entityTyp.FieldByName("ID")
 	if !exists {
 		return id
 	}
 
 	if fieldTyp.Type == reflect.TypeOf(mgoBson.ObjectId("")) {
-		objectId := mgoBson.ObjectIdHex(id)
-		return objectId
+		objectID := mgoBson.ObjectIdHex(id)
+		return objectID
 	}
 
 	return id
 }
 
-// 不提供 offset 操作
+// Offset 不提供 offset 操作
 func (query *MgoQuery) Offset(ctx *gin.Context) int {
 	page := ctx.DefaultQuery("page", "1")
 	num, _ := strconv.Atoi(page)

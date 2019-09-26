@@ -1,5 +1,5 @@
-// 发送邮件
-// 	email.Send(email.NewHtmlSender("这里是标题", email.ParseHtml(app.FilePath() + "/public/email/test.html", struct {
+// Package email 发送邮件
+// 	email.Send(email.NewHTMLSender("这里是标题", email.ParseHHTML(app.FilePath() + "/public/email/test.html", struct {
 //		Name string
 //	}{Name:"medivh"}), "844627855@qq.com"))
 package email
@@ -16,6 +16,7 @@ import (
 )
 
 type (
+	// Email 邮件信息
 	Email struct {
 		username string // 发送账户
 		password string // 账户密码
@@ -23,12 +24,14 @@ type (
 		port     int    // smtp服务器端口
 		ssl      bool
 	}
+	// Object 发送邮件的结构数据
 	Object struct {
 		To      []string          // 收件人邮件地址
 		Header  map[string]string // 邮件头
 		Content string            // 邮件正文
 	}
-	Html struct {
+	// HTML 邮件如果是HTML将被转为该结构
+	HTML struct {
 		body []byte
 	}
 	config struct {
@@ -48,7 +51,7 @@ var (
 	conf    config
 )
 
-// 启动邮件服务
+// StartEmailSender 启动邮件服务
 func StartEmailSender() {
 	once.Do(func() {
 		_ = app.Config().Bind("application", "email", &conf)
@@ -74,8 +77,11 @@ func StartEmailSender() {
 	})
 }
 
-func ParseHtml(path string, data interface{}) *Html {
-	html := new(Html)
+// ParseHHTML 解析HTML数据
+//  path 为HTML模板文件地址
+//  data 为填充数据
+func ParseHHTML(path string, data interface{}) *HTML {
+	html := new(HTML)
 	html.body = make([]byte, 0)
 	parse, err := template.ParseFiles(path)
 	if err != nil {
@@ -93,7 +99,7 @@ func ParseHtml(path string, data interface{}) *Html {
 	return html
 }
 
-// 发送邮件
+// NewSender 发送邮件
 func NewSender(subject, content string, to ...string) *Object {
 	object := &Object{
 		Content: content,
@@ -109,8 +115,8 @@ func NewSender(subject, content string, to ...string) *Object {
 	return object
 }
 
-// 发送邮件
-func NewHtmlSender(subject string, html *Html, to ...string) *Object {
+// NewHTMLSender 发送邮件
+func NewHTMLSender(subject string, html *HTML, to ...string) *Object {
 	object := NewSender(subject, string(html.body), to...)
 	object.writeHeader("Content-Type", "text/html;chartset=UTF-8")
 	return object
@@ -129,6 +135,8 @@ func (object *Object) convertToBody() []byte {
 	return []byte(headers + "\r\n" + object.Content)
 }
 
+// Send 发送邮件, 邮件服务启动时现在默认是启动了一个协程, 在这里将把发送对象直接发送到协程chan中, 由协程接收然后发送
+// 因为并不是所有人都会使用消息队列来处理,毕竟不是谁都是千万业务, 之后可能将会独立出来一个接口实现, 实现自我配置
 func Send(sender *Object) {
 	senders <- sender
 }

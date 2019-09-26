@@ -11,12 +11,13 @@ import (
 	"starter/pkg/validator"
 )
 
+// LoginForm 登录表单验证结构体
 type LoginForm struct {
 	Username string `binding:"required,max=12" form:"username"`
 	Password string `binding:"required,max=128" form:"password"`
 }
 
-// 登录示例
+// Login 登录示例
 func Login(ctx *gin.Context) {
 	var loginForm LoginForm
 	if err := validator.Bind(ctx, &loginForm); !err.IsValid() {
@@ -45,6 +46,7 @@ func Login(ctx *gin.Context) {
 	app.NewResponse(app.Success, gin.H{"token": token}).End(ctx)
 }
 
+// StaffInfo 获取当前登录用户信息
 func StaffInfo(ctx *gin.Context) {
 	staff, exists := ctx.Get(middlewares.AuthKey)
 	if exists {

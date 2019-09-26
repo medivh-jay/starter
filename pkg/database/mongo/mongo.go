@@ -1,4 +1,4 @@
-//  三方 mgo 太长时间不维护了
+// Package mongo 三方 mgo 太长时间不维护了
 //  官方 mongo 驱动很不友好
 //  所以这里稍微对常用方法做了处理,可以直接调用这里的方法进行一些常规操作
 //  复杂的操作,调用这里的 Collection 之后可获取里边的 Database 属性 和 Table 属性操作
@@ -24,7 +24,8 @@ var (
 )
 
 type (
-	collection struct {
+	// CollectionInfo 集合包含的连接信息和查询等操作信息
+	CollectionInfo struct {
 		Database *mongo.Database
 		Table    *mongo.Collection
 		filter   bson.M
@@ -35,7 +36,7 @@ type (
 	}
 
 	config struct {
-		Url             string `toml:"url"`
+		URL             string `toml:"url"`
 		Database        string `toml:"database"`
 		MaxConnIdleTime int    `toml:"max_conn_idle_time"`
 		MaxPoolSize     int    `toml:"max_pool_size"`
@@ -44,7 +45,7 @@ type (
 	}
 )
 
-// 启动 mongo
+// Start 启动 mongo
 func Start() {
 	_ = app.Config().Bind("application", "mongo", &conf)
 	var err error
@@ -55,7 +56,7 @@ func Start() {
 		mongoOptions.SetAuth(options.Credential{Username: conf.Username, Password: conf.Password})
 	}
 
-	client, err = mongo.NewClient(mongoOptions.ApplyURI(conf.Url))
+	client, err = mongo.NewClient(mongoOptions.ApplyURI(conf.URL))
 	if err != nil {
 		app.Logger().WithField("log_type", "pkg.mongo.mongo").Error(err)
 	}
@@ -66,48 +67,48 @@ func Start() {
 	}
 }
 
-// 得到一个mongo操作对象
-func Collection(table database.Table) *collection {
+// Collection 得到一个mongo操作对象
+func Collection(table database.Table) *CollectionInfo {
 	db := client.Database(conf.Database)
-	return &collection{
+	return &CollectionInfo{
 		Database: db,
 		Table:    db.Collection(table.TableName()),
 		filter:   make(bson.M),
 	}
 }
 
-// 条件查询, bson.M{"field": "value"}
-func (collection *collection) Where(m bson.M) *collection {
+// Where 条件查询, bson.M{"field": "value"}
+func (collection *CollectionInfo) Where(m bson.M) *CollectionInfo {
 	collection.filter = m
 	return collection
 }
 
-// 限制条数
-func (collection *collection) Limit(n int64) *collection {
+// Limit 限制条数
+func (collection *CollectionInfo) Limit(n int64) *CollectionInfo {
 	collection.limit = n
 	return collection
 }
 
-// 跳过条数
-func (collection *collection) Skip(n int64) *collection {
+// Skip 跳过条数
+func (collection *CollectionInfo) Skip(n int64) *CollectionInfo {
 	collection.skip = n
 	return collection
 }
 
-// 排序 bson.M{"created_at":-1}
-func (collection *collection) Sort(sorts bson.M) *collection {
+// Sort 排序 bson.M{"created_at":-1}
+func (collection *CollectionInfo) Sort(sorts bson.M) *CollectionInfo {
 	collection.sort = sorts
 	return collection
 }
 
-// 指定查询字段
-func (collection *collection) Fields(fields bson.M) *collection {
+// Fields 指定查询字段
+func (collection *CollectionInfo) Fields(fields bson.M) *CollectionInfo {
 	collection.fields = fields
 	return collection
 }
 
-// 写入单条数据
-func (collection *collection) InsertOne(document interface{}) *mongo.InsertOneResult {
+// InsertOne 写入单条数据
+func (collection *CollectionInfo) InsertOne(document interface{}) *mongo.InsertOneResult {
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	result, err := collection.Table.InsertOne(ctx, BeforeCreate(document))
 	if err != nil {
@@ -116,8 +117,8 @@ func (collection *collection) InsertOne(document interface{}) *mongo.InsertOneRe
 	return result
 }
 
-// 写入多条数据
-func (collection *collection) InsertMany(documents interface{}) *mongo.InsertManyResult {
+// InsertMany 写入多条数据
+func (collection *CollectionInfo) InsertMany(documents interface{}) *mongo.InsertManyResult {
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	var data []interface{}
 	data = BeforeCreate(documents).([]interface{})
@@ -128,8 +129,8 @@ func (collection *collection) InsertMany(documents interface{}) *mongo.InsertMan
 	return result
 }
 
-// 存在更新,不存在写入, documents 里边的文档需要有 _id 的存在
-func (collection *collection) UpdateOrInsert(documents []interface{}) *mongo.UpdateResult {
+// UpdateOrInsert 存在更新,不存在写入, documents 里边的文档需要有 _id 的存在
+func (collection *CollectionInfo) UpdateOrInsert(documents []interface{}) *mongo.UpdateResult {
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	var upsert = true
 	result, err := collection.Table.UpdateMany(ctx, documents, &options.UpdateOptions{Upsert: &upsert})
@@ -139,8 +140,8 @@ func (collection *collection) UpdateOrInsert(documents []interface{}) *mongo.Upd
 	return result
 }
 
-//
-func (collection *collection) UpdateOne(document interface{}) *mongo.UpdateResult {
+// UpdateOne 更新一条
+func (collection *CollectionInfo) UpdateOne(document interface{}) *mongo.UpdateResult {
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	result, err := collection.Table.UpdateOne(ctx, collection.filter, bson.M{"$set": BeforeUpdate(document)})
 	if err != nil {
@@ -149,8 +150,8 @@ func (collection *collection) UpdateOne(document interface{}) *mongo.UpdateResul
 	return result
 }
 
-//
-func (collection *collection) UpdateMany(document interface{}) *mongo.UpdateResult {
+// UpdateMany 更新多条
+func (collection *CollectionInfo) UpdateMany(document interface{}) *mongo.UpdateResult {
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	result, err := collection.Table.UpdateMany(ctx, collection.filter, bson.M{"$set": BeforeUpdate(document)})
 	if err != nil {
@@ -159,8 +160,8 @@ func (collection *collection) UpdateMany(document interface{}) *mongo.UpdateResu
 	return result
 }
 
-// 查询一条数据
-func (collection *collection) FindOne(document interface{}) error {
+// FindOne 查询一条数据
+func (collection *CollectionInfo) FindOne(document interface{}) error {
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	result := collection.Table.FindOne(ctx, collection.filter, &options.FindOneOptions{
 		Skip:       &collection.skip,
@@ -175,8 +176,8 @@ func (collection *collection) FindOne(document interface{}) error {
 	return nil
 }
 
-// 查询多条数据
-func (collection *collection) FindMany(documents interface{}) {
+// FindMany 查询多条数据
+func (collection *CollectionInfo) FindMany(documents interface{}) {
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	result, err := collection.Table.Find(ctx, collection.filter, &options.FindOptions{
 		Skip:       &collection.skip,
@@ -211,8 +212,8 @@ func (collection *collection) FindMany(documents interface{}) {
 	val.Elem().Set(slice)
 }
 
-// 删除数据,并返回删除成功的数量
-func (collection *collection) Delete() int64 {
+// Delete 删除数据,并返回删除成功的数量
+func (collection *CollectionInfo) Delete() int64 {
 	if collection.filter == nil || len(collection.filter) == 0 {
 		app.Logger().WithField("log_type", "pkg.mongo.mongo").Error("you can't delete all documents, it's very dangerous")
 		return 0
@@ -225,7 +226,8 @@ func (collection *collection) Delete() int64 {
 	return result.DeletedCount
 }
 
-func (collection *collection) Count() int64 {
+// Count 根据指定条件获取总条数
+func (collection *CollectionInfo) Count() int64 {
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	result, err := collection.Table.CountDocuments(ctx, collection.filter)
 	if err != nil {
@@ -235,6 +237,7 @@ func (collection *collection) Count() int64 {
 	return result
 }
 
+// BeforeCreate 创建数据前置操作
 func BeforeCreate(document interface{}) interface{} {
 	val := reflect.ValueOf(document)
 	typ := reflect.TypeOf(document)
@@ -255,16 +258,16 @@ func BeforeCreate(document interface{}) interface{} {
 		for i := 0; i < typ.NumField(); i++ {
 			data[typ.Field(i).Tag.Get("bson")] = val.Field(i).Interface()
 		}
-		if val.FieldByName("Id").Type() == reflect.TypeOf(primitive.ObjectID{}) {
+		if val.FieldByName("ID").Type() == reflect.TypeOf(primitive.ObjectID{}) {
 			data["_id"] = primitive.NewObjectID()
 		}
 
-		if val.FieldByName("Id").Kind() == reflect.String && val.FieldByName("Id").Interface() == "" {
+		if val.FieldByName("ID").Kind() == reflect.String && val.FieldByName("ID").Interface() == "" {
 			data["_id"] = primitive.NewObjectID().Hex()
 		}
 
-		if IsIntn(val.FieldByName("Id").Kind()) && val.FieldByName("Id").Interface() == 0 {
-			data["_id"] = unique.Id()
+		if IsIntn(val.FieldByName("ID").Kind()) && val.FieldByName("ID").Interface() == 0 {
+			data["_id"] = unique.ID()
 		}
 
 		now := time.Now().Unix()
@@ -284,6 +287,7 @@ func BeforeCreate(document interface{}) interface{} {
 	}
 }
 
+// BeforeUpdate 更新数据前置操作
 func BeforeUpdate(document interface{}) interface{} {
 	val := reflect.ValueOf(document)
 	typ := reflect.TypeOf(document)
@@ -316,6 +320,7 @@ func BeforeUpdate(document interface{}) interface{} {
 	}
 }
 
+// IsIntn 是否为整数
 func IsIntn(p reflect.Kind) bool {
 	return p == reflect.Int || p == reflect.Int64 || p == reflect.Uint64 || p == reflect.Uint32
 }

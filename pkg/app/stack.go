@@ -37,6 +37,7 @@ func source(lines [][]byte, n int) []byte {
 	return bytes.TrimSpace(lines[n])
 }
 
+// Stack 获取调用堆栈信息
 func Stack(skip int) []map[string]interface{} {
 	var stack = make([]map[string]interface{}, 0, 0)
 

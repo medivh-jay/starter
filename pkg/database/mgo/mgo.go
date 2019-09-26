@@ -12,7 +12,8 @@ import (
 	"time"
 )
 
-type collection struct {
+// CollectionInfo 集合包含的连接信息和查询等操作信息
+type CollectionInfo struct {
 	Database *mgo.Session
 	Table    *mgo.Collection
 	Session  *mgo.Database
@@ -24,7 +25,7 @@ type collection struct {
 }
 
 type config struct {
-	Url             string `toml:"url"`
+	URL             string `toml:"url"`
 	Database        string `toml:"database"`
 	MaxConnIdleTime int    `toml:"max_conn_idle_time"`
 	MaxPoolSize     int    `toml:"max_pool_size"`
@@ -35,10 +36,11 @@ type config struct {
 var db *mgo.Session
 var conf config
 
+// Start 连接到mongo
 func Start() {
 	_ = app.Config().Bind("application", "mongo", &conf)
 	dialInfo := &mgo.DialInfo{
-		Addrs:     []string{strings.ReplaceAll(conf.Url, "mongodb://", "")},
+		Addrs:     []string{strings.ReplaceAll(conf.URL, "mongodb://", "")},
 		Direct:    false,
 		Timeout:   time.Second * 5,
 		PoolLimit: conf.MaxPoolSize,
@@ -54,12 +56,17 @@ func Start() {
 	}
 }
 
-// 得到一个mongo操作对象
+// GetDB 获得一个 mgo 的 session, 获取使用之后需要显式调用 Close 关闭
+func GetDB() *mgo.Session {
+	return db.Copy()
+}
+
+// Collection 得到一个mongo操作对象
 // 请显式调用 Close 方法释放session
-func Collection(table database.Table) *collection {
+func Collection(table database.Table) *CollectionInfo {
 	clone := db.Copy()
 	session := clone.DB(conf.Database)
-	return &collection{
+	return &CollectionInfo{
 		Database: clone,
 		Session:  session,
 		Table:    session.C(table.TableName()),
@@ -68,41 +75,43 @@ func Collection(table database.Table) *collection {
 
 }
 
-func (collection *collection) Where(m bson.M) *collection {
+// Where where 条件查询
+func (collection *CollectionInfo) Where(m bson.M) *CollectionInfo {
 	collection.filter = m
 	return collection
 }
 
-func (collection *collection) Close() {
+// Close 关闭session
+func (collection *CollectionInfo) Close() {
 	collection.Database.Close()
 }
 
-// 限制条数
-func (collection *collection) Limit(n int) *collection {
+// Limit 限制条数
+func (collection *CollectionInfo) Limit(n int) *CollectionInfo {
 	collection.limit = n
 	return collection
 }
 
-// 跳过条数
-func (collection *collection) Skip(n int) *collection {
+// Skip 跳过条数
+func (collection *CollectionInfo) Skip(n int) *CollectionInfo {
 	collection.skip = n
 	return collection
 }
 
-// 排序 bson.M{"created_at":-1}
-func (collection *collection) Sort(sorts ...string) *collection {
+// Sort 排序 bson.M{"created_at":-1}
+func (collection *CollectionInfo) Sort(sorts ...string) *CollectionInfo {
 	collection.sort = sorts
 	return collection
 }
 
-// 指定查询字段
-func (collection *collection) Fields(fields bson.M) *collection {
+// Fields 指定查询字段
+func (collection *CollectionInfo) Fields(fields bson.M) *CollectionInfo {
 	collection.fields = fields
 	return collection
 }
 
-// 写入单条数据
-func (collection *collection) InsertOne(document interface{}) (interface{}, error) {
+// InsertOne 写入单条数据
+func (collection *CollectionInfo) InsertOne(document interface{}) (interface{}, error) {
 	data := BeforeCreate(document)
 	err := collection.Table.Insert(data)
 	if err != nil {
@@ -111,8 +120,8 @@ func (collection *collection) InsertOne(document interface{}) (interface{}, erro
 	return data, err
 }
 
-// 写入多条数据
-func (collection *collection) InsertMany(documents interface{}) interface{} {
+// InsertMany 写入多条数据
+func (collection *CollectionInfo) InsertMany(documents interface{}) interface{} {
 	var data []interface{}
 	data = BeforeCreate(documents).([]interface{})
 	err := collection.Table.Insert(data)
@@ -122,8 +131,8 @@ func (collection *collection) InsertMany(documents interface{}) interface{} {
 	return data
 }
 
-// 存在更新,不存在写入, documents 里边的文档需要有 _id 的存在
-func (collection *collection) UpdateOrInsert(document interface{}) *mgo.ChangeInfo {
+// UpdateOrInsert 存在更新,不存在写入, documents 里边的文档需要有 _id 的存在
+func (collection *CollectionInfo) UpdateOrInsert(document interface{}) *mgo.ChangeInfo {
 	result, err := collection.Table.Upsert(collection.filter, document)
 	if err != nil {
 		app.Logger().WithField("log_type", "pkg.mgo.mgo").Error(err)
@@ -131,8 +140,8 @@ func (collection *collection) UpdateOrInsert(document interface{}) *mgo.ChangeIn
 	return result
 }
 
-//
-func (collection *collection) UpdateOne(document interface{}) bool {
+// UpdateOne 更新一条
+func (collection *CollectionInfo) UpdateOne(document interface{}) bool {
 	err := collection.Table.Update(collection.filter, bson.M{"$set": BeforeUpdate(document)})
 	if err != nil {
 		app.Logger().WithField("log_type", "pkg.mgo.mgo").Error(err)
@@ -140,8 +149,8 @@ func (collection *collection) UpdateOne(document interface{}) bool {
 	return err == nil
 }
 
-//
-func (collection *collection) UpdateMany(document interface{}) *mgo.ChangeInfo {
+// UpdateMany 更新多条
+func (collection *CollectionInfo) UpdateMany(document interface{}) *mgo.ChangeInfo {
 	result, err := collection.Table.UpdateAll(collection.filter, bson.M{"$set": BeforeUpdate(document)})
 	if err != nil {
 		app.Logger().WithField("log_type", "pkg.mgo.mgo").Error(err)
@@ -149,8 +158,8 @@ func (collection *collection) UpdateMany(document interface{}) *mgo.ChangeInfo {
 	return result
 }
 
-// 查询一条数据
-func (collection *collection) FindOne(document interface{}) error {
+// FindOne 查询一条数据
+func (collection *CollectionInfo) FindOne(document interface{}) error {
 	err := collection.Table.Find(collection.filter).Select(collection.fields).One(document)
 	if err != nil {
 		app.Logger().WithField("log_type", "pkg.mgo.mgo").Error(err)
@@ -159,16 +168,16 @@ func (collection *collection) FindOne(document interface{}) error {
 	return nil
 }
 
-// 查询多条数据
-func (collection *collection) FindMany(documents interface{}) {
+// FindMany 查询多条数据
+func (collection *CollectionInfo) FindMany(documents interface{}) {
 	err := collection.Table.Find(collection.filter).Skip(collection.skip).Limit(collection.limit).Sort(collection.sort...).Select(collection.fields).All(documents)
 	if err != nil {
 		app.Logger().WithField("log_type", "pkg.mgo.mgo").Error(err)
 	}
 }
 
-// 删除数据,并返回删除成功的数量
-func (collection *collection) Delete() bool {
+// Delete 删除数据,并返回删除成功的数量
+func (collection *CollectionInfo) Delete() bool {
 	if collection.filter == nil || len(collection.filter) == 0 {
 		app.Logger().WithField("log_type", "pkg.mgo.mgo").Error("you can't delete all documents, it's very dangerous")
 		return false
@@ -180,7 +189,8 @@ func (collection *collection) Delete() bool {
 	return err == nil
 }
 
-func (collection *collection) Count() int64 {
+// Count 获取指定条件下总条数
+func (collection *CollectionInfo) Count() int64 {
 	count, err := collection.Table.Find(collection.filter).Count()
 	if err != nil {
 		app.Logger().WithField("log_type", "pkg.mgo.mgo").Error(err)
@@ -189,6 +199,7 @@ func (collection *collection) Count() int64 {
 	return int64(count)
 }
 
+// BeforeCreate 在创建文档之前进行id和时间等赋值操作
 func BeforeCreate(document interface{}) interface{} {
 	val := reflect.ValueOf(document)
 	typ := reflect.TypeOf(document)
@@ -209,16 +220,16 @@ func BeforeCreate(document interface{}) interface{} {
 		for i := 0; i < typ.NumField(); i++ {
 			data[typ.Field(i).Tag.Get("bson")] = val.Field(i).Interface()
 		}
-		if val.FieldByName("Id").Type() == reflect.TypeOf(bson.ObjectId("")) {
+		if val.FieldByName("ID").Type() == reflect.TypeOf(bson.ObjectId("")) {
 			data["_id"] = primitive.NewObjectID()
 		}
 
-		if val.FieldByName("Id").Kind() == reflect.String && val.FieldByName("Id").Interface() == "" {
+		if val.FieldByName("ID").Kind() == reflect.String && val.FieldByName("ID").Interface() == "" {
 			data["_id"] = primitive.NewObjectID().Hex()
 		}
 
-		if IsIntn(val.FieldByName("Id").Kind()) && val.FieldByName("Id").Interface() == 0 {
-			data["_id"] = unique.Id()
+		if IsIntn(val.FieldByName("ID").Kind()) && val.FieldByName("ID").Interface() == 0 {
+			data["_id"] = unique.ID()
 		}
 
 		now := time.Now().Unix()
@@ -238,10 +249,12 @@ func BeforeCreate(document interface{}) interface{} {
 	}
 }
 
+// IsIntn 类型是否是数字
 func IsIntn(p reflect.Kind) bool {
 	return p == reflect.Int || p == reflect.Int64 || p == reflect.Uint64 || p == reflect.Uint32
 }
 
+// BeforeUpdate 在更新前的操作
 func BeforeUpdate(document interface{}) interface{} {
 	val := reflect.ValueOf(document)
 	typ := reflect.TypeOf(document)

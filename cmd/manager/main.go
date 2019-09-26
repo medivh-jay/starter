@@ -44,7 +44,7 @@ func main() {
 				if mongo.Collection(role).Where(bson.M{"permission": permissionResult.InsertedID.(primitive.ObjectID).Hex()}).Count() == 0 {
 					roleResult := mongo.Collection(role).InsertOne(role)
 
-					var binding = &permission.Binding{UserId: staffResult.InsertedID.(primitive.ObjectID).Hex(), RoleId: roleResult.InsertedID.(primitive.ObjectID).Hex()}
+					var binding = &permission.Binding{UserID: staffResult.InsertedID.(primitive.ObjectID).Hex(), RoleID: roleResult.InsertedID.(primitive.ObjectID).Hex()}
 					app.Logger().Debug(mongo.Collection(binding).InsertOne(binding))
 				}
 			}

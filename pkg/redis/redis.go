@@ -15,10 +15,12 @@ type config struct {
 }
 
 var (
+	// Client redis连接资源
 	Client *redis.Client
 	conf   config
 )
 
+// Start 启动redis
 func Start() {
 	_ = app.Config().Bind("application", "redis", &conf)
 	Client = redis.NewClient(&redis.Options{
@@ -30,8 +32,8 @@ func Start() {
 	})
 }
 
-// 获取指定key的值,如果值不存在,就执行f方法将返回值存入redis
-func Get(key string, expiration time.Duration, f func() string) string {
+// CacheGet 获取指定key的值,如果值不存在,就执行f方法将返回值存入redis
+func CacheGet(key string, expiration time.Duration, f func() string) string {
 	cmd := Client.Get(key)
 	var val string
 	result, _ := cmd.Result()
