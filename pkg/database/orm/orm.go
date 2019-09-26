@@ -42,7 +42,7 @@ var (
 	orm       = &Orm{}
 	slavesLen int
 	err       error
-	cursor    int64 = 0
+	cursor    int64
 	conf      config
 )
 

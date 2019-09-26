@@ -143,7 +143,8 @@ func (producer *Producer) Send(topic string, value interface{}) error {
 	case *kafka.Message:
 		err = producer.producer.Produce(value.(*kafka.Message), nil)
 	default:
-		data, err := jsoniter.Marshal(value)
+		var data []byte
+		data, err = jsoniter.Marshal(value)
 		if err != nil {
 			app.Logger().WithField("log_type", "pkg.queue.queue").Error(err)
 		}

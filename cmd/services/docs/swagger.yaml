@@ -36,7 +36,6 @@ paths:
             $ref: '#/definitions/entities.Order'
             type: object
         "404": {}
-      summary: 订单
       tags:
       - 订单列表
 swagger: "2.0"
