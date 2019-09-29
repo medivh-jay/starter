@@ -9,7 +9,7 @@ import (
 	"starter/pkg/captcha"
 	"starter/pkg/database/managers"
 	"starter/pkg/middlewares"
-	"starter/pkg/permission"
+	"starter/pkg/rbac"
 	"starter/pkg/sessions"
 )
 
@@ -57,5 +57,5 @@ func GetEngine(engine *gin.Engine) {
 		Start(engine)
 
 	// 将权限验证数据表的CURD接口进行注册
-	permission.Inject(engine)
+	rbac.Inject(engine)
 }

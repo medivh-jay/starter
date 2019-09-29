@@ -29,7 +29,10 @@ var (
 )
 
 func (config config) ElasticSearchConfig() *esConfig.Config {
-	_ = app.Config().Bind("application", "elasticsearch", &conf)
+	err = app.Config().Bind("application", "elasticsearch", &conf)
+	if err == app.ErrNodeNotExists {
+		return nil
+	}
 	return &esConfig.Config{
 		URL:         conf.URL,
 		Index:       conf.Index,
@@ -47,7 +50,11 @@ func (config config) ElasticSearchConfig() *esConfig.Config {
 
 // Start 连接到 es
 func Start() {
-	ES, err = elastic.NewClientFromConfig(conf.ElasticSearchConfig())
+	option := conf.ElasticSearchConfig()
+	if option == nil {
+		return
+	}
+	ES, err = elastic.NewClientFromConfig(option)
 	if err != nil {
 		app.Logger().WithField("log_type", "pkg.elastic.es").Error(err)
 	}

@@ -86,7 +86,7 @@ retry:
 	es.SetFormatter(&logrus.TextFormatter{ForceColors: true})
 	es.Hooks.Add(hook)
 	// 这个操作太影响性能,release不启用
-	es.SetReportCaller(gin.Mode() != gin.ReleaseMode)
+	//es.SetReportCaller(gin.Mode() != gin.ReleaseMode)
 	es.SetNoLock()
 	if gin.Mode() != gin.ReleaseMode {
 		Terminal.Level = logrus.DebugLevel
@@ -99,7 +99,7 @@ func Start() {
 	_ = app.Config().Bind("application", "log", &config)
 	Terminal.SetFormatter(&logrus.TextFormatter{ForceColors: true})
 	// 这个操作太影响性能,release不启用
-	Terminal.SetReportCaller(gin.Mode() != gin.ReleaseMode)
+	//Terminal.SetReportCaller(gin.Mode() != gin.ReleaseMode)
 	Terminal.SetNoLock()
 	if config.Es {
 		startEsLog()

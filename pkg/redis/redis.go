@@ -22,7 +22,10 @@ var (
 
 // Start 启动redis
 func Start() {
-	_ = app.Config().Bind("application", "redis", &conf)
+	err := app.Config().Bind("application", "redis", &conf)
+	if err == app.ErrNodeNotExists {
+		return
+	}
 	Client = redis.NewClient(&redis.Options{
 		Addr:         conf.Addr,
 		Password:     conf.Password,

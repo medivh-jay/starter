@@ -10,8 +10,6 @@ import (
 )
 
 func main() {
-	server.Mode = "admin"
-
 	// pages.New(&Table).List(ctx)
 	server.Run(func(engine *gin.Engine) {
 		engine.LoadHTMLFiles()

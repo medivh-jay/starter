@@ -39,8 +39,9 @@ func (staff *Staff) Logged(platform string) {
 	if staff.LoginAt == nil {
 		staff.LoginAt = make(map[string]int64)
 	}
+
 	staff.LoginAt[platform] = time.Now().Unix()
-	mongo.Collection(staff).UpdateOne(staff)
+	mongo.Collection(staff).Where(bson.M{"_id": staff.ID}).UpdateOne(staff)
 }
 
 // TableName 获取表名

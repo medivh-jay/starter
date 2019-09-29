@@ -1,14 +1,12 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "{{.Description}}",
         "title": "starter",
         "contact": {},
         "license": {},
         "version": "1.0"
     },
     "host": "golang-project.com",
-    "basePath": "{{.BasePath}}",
     "paths": {
         "/order": {
             "get": {
@@ -18,6 +16,7 @@
                 "tags": [
                     "订单列表"
                 ],
+                "summary": "订单",
                 "parameters": [
                     {
                         "type": "string",
@@ -30,7 +29,6 @@
                 "responses": {
                     "0": {
                         "schema": {
-                            "type": "object",
                             "$ref": "#/definitions/entities.Order"
                         }
                     },
@@ -47,12 +45,21 @@
                     "description": "总金额",
                     "type": "integer"
                 },
+                "created_at": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
                 "item_id": {
                     "description": "订单id",
                     "type": "string"
                 },
                 "total": {
                     "description": "总数量",
+                    "type": "integer"
+                },
+                "updated_at": {
                     "type": "integer"
                 }
             }

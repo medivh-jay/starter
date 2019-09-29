@@ -13,7 +13,8 @@ type ListToVisitor struct {
 	ID string `form:"id" binding:"required,max=32"`
 }
 
-// List @Summary 订单
+// List 示例接口
+// @Summary 订单
 // @Tags 订单列表
 // @Produce  json
 // @Param    id        query    string     true      "订单id"

@@ -38,7 +38,11 @@ var conf config
 
 // Start 连接到mongo
 func Start() {
-	_ = app.Config().Bind("application", "mongo", &conf)
+	var err error
+	err = app.Config().Bind("application", "mongo", &conf)
+	if err == app.ErrNodeNotExists {
+		return
+	}
 	dialInfo := &mgo.DialInfo{
 		Addrs:     []string{strings.ReplaceAll(conf.URL, "mongodb://", "")},
 		Direct:    false,
@@ -47,7 +51,6 @@ func Start() {
 		Username:  conf.Username,
 		Password:  conf.Password,
 	}
-	var err error
 	db, err = mgo.DialWithInfo(dialInfo)
 	if err != nil {
 		app.Logger().WithField("log_type", "pkg.mgo.mgo").Error(err)
@@ -274,7 +277,10 @@ func BeforeUpdate(document interface{}) interface{} {
 		var data = make(bson.M)
 		for i := 0; i < typ.NumField(); i++ {
 			if !isZero(val.Field(i)) {
-				data[typ.Field(i).Tag.Get("bson")] = val.Field(i).Interface()
+				tag := strings.Split(typ.Field(i).Tag.Get("bson"), ",")[0]
+				if tag != "_id" {
+					data[tag] = val.Field(i).Interface()
+				}
 			}
 		}
 		data["updated_at"] = time.Now().Unix()

@@ -1,5 +1,7 @@
 all:
 	$(MAKE) -C cmd/services
+	$(MAKE) -C cmd/manager
+	$(MAKE) -C cmd/admin
 
 manager:
 	$(MAKE) -C cmd/manager

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"errors"
 	"fmt"
 	"github.com/BurntSushi/toml"
 	"github.com/gin-gonic/gin"
@@ -21,6 +22,8 @@ type Configuration struct {
 var (
 	config = new(Configuration).singleLoad()
 	json   = jsoniter.Config{EscapeHTML: true, TagKey: "toml"}.Froze()
+	// ErrNodeNotExists 配置节点不存在
+	ErrNodeNotExists = errors.New("node not exists")
 )
 
 // Config 得到config对象
@@ -50,9 +53,7 @@ func (conf *Configuration) walk(path string, info os.FileInfo, err error) error 
 				// 配置读失败了
 				log.Fatal(err)
 			}
-			relPath, _ := filepath.Rel(Root()+"/configs/"+gin.Mode(), strings.TrimSuffix(path, ".toml"))
-			node := strings.ReplaceAll(relPath, "/", ".")
-			conf.copy(node, config)
+			conf.copy(strings.TrimSuffix(info.Name(), ".toml"), config)
 		} else {
 			return filepath.Walk(info.Name(), conf.walk)
 		}
@@ -63,7 +64,7 @@ func (conf *Configuration) walk(path string, info os.FileInfo, err error) error 
 func (conf *Configuration) singleLoad() *Configuration {
 	conf.once.Do(func() {
 		conf.configs = make(map[string]map[string]interface{})
-		path, _ := filepath.Abs(fmt.Sprintf("./configs/%s/", gin.Mode()))
+		path, _ := filepath.Abs(fmt.Sprintf("./configs/%s/%s/", gin.Mode(), Name()))
 		_ = filepath.Walk(path, conf.walk)
 	})
 
@@ -85,7 +86,7 @@ func (conf *Configuration) Bind(node, key string, obj interface{}) error {
 	if key != "" {
 		objVal, ok = nodeVal[key]
 		if !ok {
-			return nil
+			return ErrNodeNotExists
 		}
 	} else {
 		objVal = nodeVal

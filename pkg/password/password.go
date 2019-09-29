@@ -6,7 +6,7 @@ import (
 	"starter/pkg/server"
 )
 
-var passwordToken = server.Modes[server.Mode].PasswordToken
+var passwordToken = server.Config.PasswordToken
 
 // Hash 密码hash
 func Hash(password string) string {

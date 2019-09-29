@@ -77,7 +77,7 @@ func newClaims(entity AuthInterface) Claims {
 // NewToken 根据传入的结构体(非空结构体)返回一个token
 func NewToken(entity AuthInterface) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, newClaims(entity))
-	rs, err := token.SignedString([]byte(server.Modes[server.Mode].JwtToken))
+	rs, err := token.SignedString([]byte(server.Config.JwtToken))
 	if err != nil {
 		return "", err
 	}
@@ -87,7 +87,7 @@ func NewToken(entity AuthInterface) (string, error) {
 // ParseToken 根据传入 token 得到 Claims 信息
 func ParseToken(sign string) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(sign, &Claims{}, func(token *jwt.Token) (i interface{}, e error) {
-		return []byte(server.Modes[server.Mode].JwtToken), nil
+		return []byte(server.Config.JwtToken), nil
 	})
 
 	if err != nil {

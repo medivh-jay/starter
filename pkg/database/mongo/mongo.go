@@ -15,6 +15,7 @@ import (
 	"starter/pkg/app"
 	"starter/pkg/database"
 	"starter/pkg/unique"
+	"strings"
 	"time"
 )
 
@@ -47,8 +48,12 @@ type (
 
 // Start 启动 mongo
 func Start() {
-	_ = app.Config().Bind("application", "mongo", &conf)
 	var err error
+	err = app.Config().Bind("application", "mongo", &conf)
+	if err == app.ErrNodeNotExists {
+		// 配置节点不存在, 不启动服务
+		return
+	}
 	mongoOptions := options.Client()
 	mongoOptions.SetMaxConnIdleTime(time.Duration(conf.MaxConnIdleTime) * time.Second)
 	mongoOptions.SetMaxPoolSize(uint16(conf.MaxPoolSize))
@@ -306,7 +311,10 @@ func BeforeUpdate(document interface{}) interface{} {
 		var data = make(bson.M)
 		for i := 0; i < typ.NumField(); i++ {
 			if !isZero(val.Field(i)) {
-				data[typ.Field(i).Tag.Get("bson")] = val.Field(i).Interface()
+				tag := strings.Split(typ.Field(i).Tag.Get("bson"), ",")[0]
+				if tag != "_id" {
+					data[tag] = val.Field(i).Interface()
+				}
 			}
 		}
 		data["updated_at"] = time.Now().Unix()

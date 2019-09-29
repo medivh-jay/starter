@@ -10,7 +10,7 @@ import (
 	"starter/pkg/database/mongo"
 	"starter/pkg/middlewares"
 	"starter/pkg/password"
-	"starter/pkg/permission"
+	"starter/pkg/rbac"
 	"starter/pkg/server"
 )
 
@@ -35,16 +35,16 @@ func main() {
 			staffResult := mongo.Collection(staff).InsertOne(staff)
 
 			// 生成总权限
-			var perm = &permission.Permission{Name: "所有权限", Path: "*", Method: "*"}
+			var perm = &rbac.Permission{Name: "所有权限", Path: "*", Method: "*"}
 			if mongo.Collection(perm).Where(bson.M{"path": "*", "method": "*"}).Count() == 0 {
 				permissionResult := mongo.Collection(perm).InsertOne(perm)
 
 				// 生成超级管理员角色
-				var role = &permission.Role{Name: "超级管理员", Permissions: []string{permissionResult.InsertedID.(primitive.ObjectID).Hex()}}
+				var role = &rbac.Role{Name: "超级管理员", Permissions: []string{permissionResult.InsertedID.(primitive.ObjectID).Hex()}}
 				if mongo.Collection(role).Where(bson.M{"permission": permissionResult.InsertedID.(primitive.ObjectID).Hex()}).Count() == 0 {
 					roleResult := mongo.Collection(role).InsertOne(role)
 
-					var binding = &permission.Binding{UserID: staffResult.InsertedID.(primitive.ObjectID).Hex(), RoleID: roleResult.InsertedID.(primitive.ObjectID).Hex()}
+					var binding = &rbac.Binding{UserID: staffResult.InsertedID.(primitive.ObjectID).Hex(), RoleID: roleResult.InsertedID.(primitive.ObjectID).Hex()}
 					app.Logger().Debug(mongo.Collection(binding).InsertOne(binding))
 				}
 			}

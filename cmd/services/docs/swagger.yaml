@@ -1,9 +1,12 @@
-basePath: '{{.BasePath}}'
 definitions:
   entities.Order:
     properties:
       amount:
         description: 总金额
+        type: integer
+      created_at:
+        type: integer
+      id:
         type: integer
       item_id:
         description: 订单id
@@ -11,11 +14,12 @@ definitions:
       total:
         description: 总数量
         type: integer
+      updated_at:
+        type: integer
     type: object
 host: golang-project.com
 info:
   contact: {}
-  description: '{{.Description}}'
   license: {}
   title: starter
   version: "1.0"
@@ -34,8 +38,8 @@ paths:
         "0":
           schema:
             $ref: '#/definitions/entities.Order'
-            type: object
         "404": {}
+      summary: 订单
       tags:
       - 订单列表
 swagger: "2.0"

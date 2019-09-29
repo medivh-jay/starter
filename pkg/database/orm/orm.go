@@ -52,10 +52,13 @@ func createConnectionURL(username, password, addr, dbName string) string {
 
 // Start 启动数据库
 func Start() {
-	_ = app.Config().Bind("application", "database", &conf)
+	err = app.Config().Bind("application", "database", &conf)
+	if err == app.ErrNodeNotExists {
+		return
+	}
 	orm.Master, err = gorm.Open("mysql", createConnectionURL(conf.Master.Username, conf.Master.Password, conf.Master.Addr, conf.Master.DbName))
 	if err != nil {
-		app.Logger().WithField("log_type", "pkg.orm.orm").Warn("database connect error, you can't use orm support")
+		app.Logger().WithField("log_type", "pkg.orm.orm").Warn("database connect error, you can't use orm support: ")
 		app.Logger().WithField("log_type", "pkg.orm.orm").Warn(err)
 	}
 	orm.Master.LogMode(true)

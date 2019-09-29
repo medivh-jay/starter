@@ -1,0 +1,53 @@
+# {0} 默认值，必须限制max，{0}将被替换为max的限制值
+# {1} 字段名字
+[len]
+zh-cn="参数长度必须是{0}位"
+en-us="length required {0}"
+[required]
+zh-cn="该参数是必须的"
+en-us="param is required"
+[max]
+zh-cn="参数最大值是{0}"
+en-us="param max is {0}"
+[min]
+zh-cn="参数最小值是{0}"
+en-us="param min is {0}"
+[eq]
+zh-cn="参数必须等于{0}"
+en-us="param must be eq {0}"
+[ne]
+zh-cn="参数不能等于{0}"
+en-us="param must be ne {0}"
+[gt]
+zh-cn="参数必须大于{0}"
+en-us="param must be gt {0}"
+[gte]
+zh-cn="参数必须大于等于{0}"
+en-us="param must be gte {0}"
+[lt]
+zh-cn="参数必须小于{0}"
+en-us="param must be lt {0}"
+[lte]
+zh-cn="参数必须小于等于{0}"
+en-us="param must be lte {0}"
+[alphanum]
+zh-cn="参数必须是字母或者数字"
+en-us="param must be alphanum"
+[numeric]
+zh-cn="参数必须是数字"
+en-us="param must be numeric"
+[url]
+zh-cn="参数必须是一个有效链接"
+en-us="param must be a url"
+[base64]
+zh-cn="参数必须是一个有效base64"
+en-us="param must be a base64"
+[contains]
+zh-cn="参数必须包含{0}"
+en-us="param must contains {0}"
+[ip]
+zh-cn="参数必须是一个IP地址"
+en-us="param must a ip addr"
+[email]
+zh-cn="参数必须是一个有效邮箱地址"
+en-us="param must a email address"

@@ -1,0 +1,7 @@
+[application]
+  addr = ":22224"
+
+[log]
+  es = false # 是否使用 elasticsearch
+  index = "golang-project-log" # log 在 es 存放位置，不使用es存储log可不填
+  dir = "./logs/admin"

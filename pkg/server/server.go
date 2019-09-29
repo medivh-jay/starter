@@ -33,8 +33,6 @@ type (
 		CertFile      string `toml:"cert_file"`
 		KeyFile       string `toml:"key_file"`
 	}
-
-	applications map[string]application
 )
 
 var (
@@ -46,12 +44,12 @@ var (
 	swagHandler gin.HandlerFunc
 	engine      = gin.New()
 
-	// Modes 按目前的结构来说, 获取所有mode的application节点配置信息
-	Modes applications
+	// Config 服务配置
+	Config application
 )
 
-func certInfo(module string) (string, string) {
-	return Modes[module].CertFile, Modes[module].KeyFile
+func certInfo() (string, string) {
+	return Config.CertFile, Config.KeyFile
 }
 
 // 启动各项服务
@@ -64,7 +62,7 @@ func start() {
 	elastic.Start()
 
 	// 加载应用配置
-	_ = app.Config().Bind("application", "application", &Modes)
+	_ = app.Config().Bind("application", "application", &Config)
 
 	// 将 gin 的验证器替换为 v9 版本
 	binding.Validator = new(validator.Validator)
@@ -97,11 +95,11 @@ func Run(service func(engine *gin.Engine)) {
 
 func createServer(engine *gin.Engine) *http.Server {
 	server := &http.Server{
-		Addr:    Modes[Mode].Addr,
+		Addr:    Config.Addr,
 		Handler: engine,
 	}
 
-	if certFile, certKey := certInfo(Mode); certFile != "" && certKey != "" {
+	if certFile, certKey := certInfo(); certFile != "" && certKey != "" {
 		server.TLSConfig = &tls.Config{}
 		f, _ := tls.LoadX509KeyPair(certFile, certKey)
 		server.TLSConfig.Certificates = []tls.Certificate{f}

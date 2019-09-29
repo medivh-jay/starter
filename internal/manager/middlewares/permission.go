@@ -6,7 +6,7 @@ import (
 	"starter/internal/entities"
 	"starter/pkg/app"
 	"starter/pkg/middlewares"
-	"starter/pkg/permission"
+	"starter/pkg/rbac"
 )
 
 // CheckPermission 验证用户权限, 这是自定义的结构体，这里只是示例
@@ -17,7 +17,7 @@ func CheckPermission(context *gin.Context) {
 		return
 	}
 
-	if permission.HasPermission(staff.(entities.Staff).ID.Hex(), context) {
+	if rbac.HasPermission(staff.(entities.Staff).ID.Hex(), context) {
 		context.Next()
 		return
 	}
