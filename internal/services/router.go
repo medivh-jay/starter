@@ -19,4 +19,7 @@ func GetEngine(engine *gin.Engine) {
 	categories.GET("/mgo", category.Mgo)
 	categories.GET("/mongo", category.Mongo)
 	categories.GET("/mysql", category.Mysql)
+	categories.GET("/list_mgo", category.ListMgo)
+	categories.GET("/list_mysql", category.ListMysql)
+	categories.GET("/list_mongo", category.ListMongo)
 }

@@ -78,6 +78,27 @@ func Collection(table database.Table) *CollectionInfo {
 
 }
 
+// Database 获取数据库连接
+func Database(name ...string) *CollectionInfo {
+	var db = db.Copy()
+	collection := &CollectionInfo{
+		Database: db,
+		filter:   make(bson.M),
+	}
+	if len(name) == 1 {
+		collection.Session = db.DB(name[0])
+	} else {
+		collection.Session = db.DB(conf.Database)
+	}
+	return collection
+}
+
+// SetTable 设置集合名称
+func (collection *CollectionInfo) SetTable(name string) *CollectionInfo {
+	collection.Table = collection.Session.C(name)
+	return collection
+}
+
 // Where where 条件查询
 func (collection *CollectionInfo) Where(m bson.M) *CollectionInfo {
 	collection.filter = m
