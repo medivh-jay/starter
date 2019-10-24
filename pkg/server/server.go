@@ -167,16 +167,19 @@ func recovery(ctx *gin.Context) {
 
 			if gin.IsDebugging() {
 				app.Logger().WithField("log_type", "pkg.server.server").Error(string(httpRequest))
+				var errors = make([]logrus.Fields, 0)
 				for i := 0; i < len(stack); i++ {
-					app.Logger().
-						WithField("log_type", "pkg.server.server").
-						WithFields(logrus.Fields{"func": stack[i]["func"], "source": stack[i]["source"]}).
-						Error(fmt.Sprintf("%s:%d", stack[i]["file"], stack[i]["line"]))
+					errors = append(errors, logrus.Fields{
+						"func":   stack[i]["func"],
+						"source": stack[i]["source"],
+						"file":   fmt.Sprintf("%s:%d", stack[i]["file"], stack[i]["line"]),
+					})
 				}
+				app.Logger().WithField("log_type", "pkg.server.server").WithField("stack", errors).Error(err)
+				ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"stack": errors, "message": err})
 			} else {
 				app.Logger().WithField("log_type", "pkg.server.server").
-					WithField("stack", stack).WithField("request", string(httpRequest)).
-					Error()
+					WithField("stack", stack).WithField("request", string(httpRequest)).Error()
 			}
 
 			if brokenPipe {

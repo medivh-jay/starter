@@ -7,6 +7,7 @@ import (
 	"starter/pkg/database/category"
 	"starter/pkg/database/mongo"
 	"starter/pkg/database/orm"
+	"starter/pkg/pager"
 	"sync"
 )
 
@@ -35,18 +36,18 @@ var tempData = []entities.Category{
 
 // NewCategory 实例化控制器
 func NewCategory() *Category {
-	orm.Master().CreateTable(entities.Category{})
+	orm.Master().AutoMigrate(entities.Category{})
+	once.Do(func() {
+		for _, data := range tempData {
+			app.Logger().Debug(orm.Master().Create(&data).Error)
+		}
+		mongo.Collection(entities.Category{}).InsertMany(&tempData)
+	})
 	return &Category{entity: entities.Category{}}
 }
 
 // Mgo 使用 mgo
 func (c *Category) Mgo(ctx *gin.Context) {
-	once.Do(func() {
-		for _, data := range tempData {
-			app.Logger().Debug(orm.Master().Create(&data).Error)
-		}
-		mongo.Collection(c.entity).InsertMany(&tempData)
-	})
 	app.NewResponse(app.Success, category.New().Table(c.entity).WithMgo().Categories()).End(ctx)
 }
 
@@ -58,4 +59,19 @@ func (c *Category) Mongo(ctx *gin.Context) {
 // Mysql 使用 gorm
 func (c *Category) Mysql(ctx *gin.Context) {
 	app.NewResponse(app.Success, category.New().Table(c.entity).WithMysql().Categories()).End(ctx)
+}
+
+// ListMongo 分页功能
+func (c *Category) ListMongo(ctx *gin.Context) {
+	app.NewResponse(app.Success, pager.New(ctx, pager.NewMongoDriver()).SetIndex(c.entity.TableName()).Find(c.entity).Result()).End(ctx)
+}
+
+// ListMgo 分页功能
+func (c *Category) ListMgo(ctx *gin.Context) {
+	app.NewResponse(app.Success, pager.New(ctx, pager.NewMgoDriver()).SetIndex(c.entity.TableName()).Find(c.entity).Result()).End(ctx)
+}
+
+// ListMysql 分页功能
+func (c *Category) ListMysql(ctx *gin.Context) {
+	app.NewResponse(app.Success, pager.New(ctx, pager.NewGormDriver()).Where(pager.Where{"level": 2}).SetIndex(c.entity.TableName()).Find(c.entity).Result()).End(ctx)
 }

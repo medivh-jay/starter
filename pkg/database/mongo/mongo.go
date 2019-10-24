@@ -82,6 +82,26 @@ func Collection(table database.Table) *CollectionInfo {
 	}
 }
 
+// Database 获取数据库连接
+func Database(name ...string) *CollectionInfo {
+	var db *mongo.Database
+	if len(name) == 1 {
+		db = client.Database(name[0])
+	}
+	db = client.Database(conf.Database)
+	collection := &CollectionInfo{
+		Database: db,
+		filter:   make(bson.M),
+	}
+	return collection
+}
+
+// SetTable 设置集合名称
+func (collection *CollectionInfo) SetTable(name string) *CollectionInfo {
+	collection.Table = collection.Database.Collection(name)
+	return collection
+}
+
 // Where 条件查询, bson.M{"field": "value"}
 func (collection *CollectionInfo) Where(m bson.M) *CollectionInfo {
 	collection.filter = m

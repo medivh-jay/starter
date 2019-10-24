@@ -47,6 +47,7 @@ var (
 )
 
 func createConnectionURL(username, password, addr, dbName string) string {
+	app.Logger().Debug(fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8&parseTime=True&loc=Local", username, password, addr, dbName))
 	return fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8&parseTime=True&loc=Local", username, password, addr, dbName)
 }
 
