@@ -71,7 +71,7 @@ services:
       - mysql
     volumes:
       - .:/golang-project
-      - $HOME/medivh/go:/go  # 这里可在自己开发时指定本地go目录
+#      - $HOME/medivh/go:/go  # 这里可在自己开发时指定本地go目录
   admin:
     image: golang
     tty: true
@@ -100,7 +100,7 @@ services:
       - mysql
     volumes:
       - .:/golang-project
-      - $HOME/medivh/go:/go  # 这里可在自己开发时指定本地go目录
+#      - $HOME/medivh/go:/go  # 这里可在自己开发时指定本地go目录
   services:
     image: golang
     tty: true
@@ -129,7 +129,7 @@ services:
       - mysql
     volumes:
       - .:/golang-project
-      - $HOME/medivh/go:/go  # 这里可在自己开发时指定本地go目录
+#      - $HOME/medivh/go:/go  # 这里可在自己开发时指定本地go目录
 networks:
   dev:
     driver: bridge

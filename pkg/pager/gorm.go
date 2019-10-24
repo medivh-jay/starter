@@ -3,6 +3,7 @@ package pager
 import (
 	"fmt"
 	"github.com/jinzhu/gorm"
+	"reflect"
 	"starter/pkg/database/orm"
 	"strings"
 )
@@ -70,6 +71,11 @@ func (orm *Gorm) Sort(kv map[string]Sort) {
 func (orm *Gorm) Find(data interface{}) {
 	orm.query = strings.TrimPrefix(orm.query, "AND")
 	orm.conn.Table(orm.index).Where(orm.query, orm.args...).Limit(orm.limit).Offset(orm.skip).Order(orm.sorts).Find(data)
+}
+
+// SetTyp sql 对数据查询的类型不敏感
+func (orm *Gorm) SetTyp(typ reflect.Type) {
+	return
 }
 
 func (orm *Gorm) Count() int {

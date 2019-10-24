@@ -469,12 +469,19 @@
                 toolbar: true,
                 autoSort: false,
                 cols: cols,
-                limitName: 'rows',
+                request: {
+                    limitName: 'rows',
+                },
                 response: {
                     msgName: 'message',
                 },
                 parseData: function (res) {
-                    return res
+                    return {
+                        "code": res.code, //解析接口状态
+                        "msg": res.message, //解析提示文本
+                        "count": res.data.count, //解析数据长度
+                        "data": res.data.data //解析数据列表
+                    }
                 }
             };
 

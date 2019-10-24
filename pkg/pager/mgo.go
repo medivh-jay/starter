@@ -3,9 +3,12 @@ package pager
 import (
 	"fmt"
 	"gopkg.in/mgo.v2/bson"
+	"reflect"
 	"starter/pkg/app"
 	db "starter/pkg/database/mgo"
 )
+
+var mgoObjectIDTyp = reflect.TypeOf(bson.ObjectId(""))
 
 // Mgo 查询
 type Mgo struct {
@@ -14,11 +17,13 @@ type Mgo struct {
 	skip  int
 	index string
 	sorts []string
+	// 字段的类型转换操作
+	FieldConvert map[string]func(str interface{}) interface{}
 }
 
 // NewMgoDriver mgo 驱动支持
 func NewMgoDriver() *Mgo {
-	return &Mgo{}
+	return &Mgo{FieldConvert: make(map[string]func(str interface{}) interface{})}
 }
 
 // Where 写入查询条件
@@ -27,6 +32,11 @@ func (mgo *Mgo) Where(kv Where) {
 		mgo.where = make(Where)
 	}
 	mgo.where = mergeWhere(mgo.where, kv)
+	for k, v := range mgo.where {
+		if convert, ok := mgo.FieldConvert[k]; ok {
+			mgo.where[k] = convert(v)
+		}
+	}
 }
 
 // Section 写入区间查询条件
@@ -71,7 +81,36 @@ func (mgo *Mgo) Sort(kv map[string]Sort) {
 			mgo.sorts = append(mgo.sorts, k)
 		}
 	}
-	app.Logger().Debug(mgo.sorts)
+}
+
+// SetTyp 记录结构体类型
+//  从 bson tag 获取数据库字段值
+func (mgo *Mgo) SetTyp(typ reflect.Type) {
+	numField := typ.NumField()
+	for i := 0; i < numField; i++ {
+		field := typ.Field(i)
+		tag := field.Tag.Get("bson")
+		switch field.Type.Kind() {
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			mgo.FieldConvert[tag] = StringToInt
+		case reflect.Float32:
+			mgo.FieldConvert[tag] = StringToFloat32
+		case reflect.Float64:
+			mgo.FieldConvert[tag] = StringToFloat64
+		case reflect.Bool:
+			mgo.FieldConvert[tag] = StringToBool
+		default:
+			if field.Type == mgoObjectIDTyp {
+				mgo.FieldConvert[tag] = func(str interface{}) interface{} {
+					return bson.ObjectIdHex(str.(string))
+				}
+			} else {
+				mgo.FieldConvert[tag] = func(str interface{}) interface{} {
+					return str
+				}
+			}
+		}
+	}
 }
 
 // Find 查询数据

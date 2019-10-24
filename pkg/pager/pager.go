@@ -35,6 +35,8 @@ type Driver interface {
 	Sort(kv map[string]Sort)
 	// 查询具体操作
 	Find(data interface{})
+	// 如果具体实现代码里边需要分析Find传入的data结构, 这个方法会被调用并传入data反射类型
+	SetTyp(typ reflect.Type)
 	// 计算总数
 	Count() int
 }
@@ -111,6 +113,7 @@ func (pagination *Pagination) Limit(limit int) *Pagination {
 func (pagination *Pagination) Find(structure interface{}) *Pagination {
 	limit := ParsingLimit(pagination.ctx, pagination.defaultLimit)
 	pagination.dataTyp = reflect.TypeOf(structure)
+	pagination.driver.SetTyp(pagination.dataTyp)
 	pagination.driver.Limit(limit)
 	pagination.driver.Sort(ParseSorts(pagination.ctx))
 	pagination.driver.Index(pagination.index)
@@ -173,7 +176,9 @@ func ParsingQuery(ctx *gin.Context) Where {
 	query := ctx.Request.URL.Query()
 	for key, val := range query {
 		if len(val) == 1 {
-			where[key] = val[0]
+			if val[0] != "" {
+				where[key] = val[0]
+			}
 		}
 		if len(val) > 1 {
 			where[key] = val
