@@ -1,3 +1,11 @@
+// Package pager 分页工具
+//  目前可使用具体实现
+//  var driver pager.Driver
+//  driver = NewMongoDriver()
+//  driver = NewGormDriver()
+//  driver = NewMgoDriver()
+//
+//  pager.New(ctx, driver).SetIndex(c.entity.TableName()).Find(c.entity).Result()
 package pager
 
 import (
@@ -6,10 +14,6 @@ import (
 	"strconv"
 	"strings"
 )
-
-// pagination.New(ctx).Where(where).Limit(10).All(&users)
-// starterOrm.Master().Table(manager.GetTable().TableName()).
-//		Where(statement, params...).Limit(query.Limit(ctx)).Offset(query.Offset(ctx)).Order(sorts).Find(items.Interface())
 
 // Where 查询条件
 type Where map[string]interface{}
@@ -26,12 +30,17 @@ const (
 
 // Driver 查询驱动, Pagination会在真正查询的时候传入参数
 type Driver interface {
+	// 查询条件
 	Where(kv Where)
+	// 范围查询条件
 	Section(section Section)
+	// 每页数量
 	Limit(limit int)
+	// 跳过行
 	Skip(skip int)
 	// Index 索引名称,可以是表名,或者比如 es 的 index 名称等,标识具体资源集合的东西
 	Index(index string)
+	// 排序
 	Sort(kv map[string]Sort)
 	// 查询具体操作
 	Find(data interface{})
