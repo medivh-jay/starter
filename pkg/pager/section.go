@@ -81,19 +81,20 @@ func (section Section) getVal(val string) []int64 {
 			return []int64{0}
 		}
 		return []int64{int64(v)}
-	} else {
-		var rs []int64
-		for i := 0; i < 2; i++ {
-			v, err := strconv.Atoi(vals[i])
-			if err != nil {
-				rs = append(rs, 0)
-			} else {
-				rs = append(rs, int64(v))
-			}
-		}
-		sortkeys.Int64s(rs)
-		return rs
 	}
+
+	var rs []int64
+	for i := 0; i < 2; i++ {
+		v, err := strconv.Atoi(vals[i])
+		if err != nil {
+			rs = append(rs, 0)
+		} else {
+			rs = append(rs, int64(v))
+		}
+	}
+	sortkeys.Int64s(rs)
+	return rs
+
 }
 
 func (section Section) getKey(key string) SectionKey {
