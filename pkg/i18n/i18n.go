@@ -8,6 +8,7 @@ package i18n
 import (
 	"bytes"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"golang.org/x/text/language"
 	"io/ioutil"
 	"os"
@@ -16,6 +17,9 @@ import (
 	"sync"
 	"text/template"
 )
+
+// LangKey 默认从URL取语言值得键名
+var LangKey = "lang"
 
 // Data 自定义的需要被模板解析的信息, 在不需要传入结构体时可以使用此类型
 type Data map[string]interface{}
@@ -49,13 +53,11 @@ type few struct {
 }
 
 // Printer 一个新的message translate 对象, 一般不需要调用他
-// 但是不太明白 golint ， 有的结构体本来是不需要外部来new出来的, 只是暴露了一些外部可调用方法, 结构体本身由包内部方法初始化
-// 但是 golint 说这是不对的，不明白这么设计为何不对
 type Printer struct {
 	few        few // In this range belongs to "few"
 	many       int // Greater than or equal to this value is many
 	messages   Messages
-	acceptTag  language.Tag
+	acceptTags []language.Tag
 	defaultTag language.Tag
 }
 
@@ -124,9 +126,26 @@ func createMessageTemplate(messageID, text string) *template.Template {
 	return t
 }
 
+// GetAcceptLanguages 根据 URL 传参和 Accept-Language 获取查询语言
+//  按权重对接受语言排序
+//  如果URL存在正确language将会是最高权重
+func GetAcceptLanguages(ctx *gin.Context) []language.Tag {
+	var returnTags = make([]language.Tag, 0)
+	tags, _, _ := language.ParseAcceptLanguage(ctx.GetHeader("Accept-Language"))
+	queryLang, exists := ctx.GetQuery(LangKey)
+	if exists {
+		tag, err := language.Parse(queryLang)
+		if err == nil {
+			returnTags = append(returnTags, tag)
+		}
+	}
+	returnTags = append(returnTags, tags...)
+	return returnTags
+}
+
 // NewPrinter 根据传入语言tag获得具体翻译组件
-func (bundle *Bundle) NewPrinter(tag language.Tag) *Printer {
-	return &Printer{acceptTag: tag, defaultTag: bundle.defaultTag, messages: bundle.messages}
+func (bundle *Bundle) NewPrinter(tags ...language.Tag) *Printer {
+	return &Printer{acceptTags: tags, defaultTag: bundle.defaultTag, messages: bundle.messages}
 }
 
 // SetFewRule 自定义 few 信息模板的few规则, 在min-max范围内将使用few模板
@@ -141,15 +160,22 @@ func (p *Printer) SetManyRule(min int) *Printer {
 	return p
 }
 
+func (p *Printer) getAcceptTag() language.Tag {
+	for _, tag := range p.acceptTags {
+		if _, ok := p.messages[tag]; ok {
+			return tag
+		}
+	}
+	return p.defaultTag
+}
+
 // Translate 根据传入模板ID进行翻译, data can be nil
 func (p *Printer) Translate(key string, data interface{}, plurals ...int) string {
 	var rs bytes.Buffer
 	var err error
-	messages, ok := p.messages[p.acceptTag]
-	if !ok {
-		messages = p.messages[p.defaultTag]
-	}
+	tag := p.getAcceptTag()
 
+	messages := p.messages[tag]
 	message, ok := messages[key]
 	if !ok {
 		message = p.messages[p.defaultTag][key]
