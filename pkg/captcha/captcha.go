@@ -89,7 +89,7 @@ func Verify(id, value string) bool {
 
 func (s *customizeRdsStore) lazyLoad() {
 	s.Once.Do(func() {
-		_ = app.Config().Bind("application", "Captcha", &conf)
+		_ = app.Config().Bind("application", "captcha", &conf)
 		store.redisClient = redis.NewClient(&redis.Options{
 			Addr:         conf.Addr,
 			Password:     conf.Password,

@@ -182,7 +182,7 @@ func (p *Printer) Translate(key string, data interface{}, plurals ...int) string
 	}
 
 	if message == nil {
-		return "translate template not found"
+		return fmt.Sprintf("translate template not found: %s", key)
 	}
 
 	var msg *template.Template
