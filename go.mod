@@ -38,7 +38,7 @@ require (
 	github.com/swaggo/swag v1.7.1
 	go.mongodb.org/mongo-driver v1.7.2
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
-	golang.org/x/text v0.3.7
+	golang.org/x/text v0.3.8
 	gopkg.in/confluentinc/confluent-kafka-go.v1 v1.7.0
 	gopkg.in/go-playground/validator.v9 v9.31.0
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
