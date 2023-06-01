@@ -15,9 +15,9 @@ require (
 	github.com/facebookgo/stats v0.0.0-20151006221625-1b76add642e4 // indirect
 	github.com/facebookgo/subset v0.0.0-20200203212716-c811ad88dec4 // indirect
 	github.com/gin-contrib/sessions v0.0.3
-	github.com/gin-gonic/gin v1.7.7
-	github.com/go-playground/locales v0.14.0
-	github.com/go-playground/universal-translator v0.18.0
+	github.com/gin-gonic/gin v1.9.1
+	github.com/go-playground/locales v0.14.1
+	github.com/go-playground/universal-translator v0.18.1
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang-jwt/jwt v3.2.2+incompatible
@@ -37,8 +37,8 @@ require (
 	github.com/swaggo/gin-swagger v1.3.1
 	github.com/swaggo/swag v1.7.1
 	go.mongodb.org/mongo-driver v1.7.2
-	golang.org/x/crypto v0.1.0
-	golang.org/x/text v0.4.0
+	golang.org/x/crypto v0.9.0
+	golang.org/x/text v0.9.0
 	gopkg.in/confluentinc/confluent-kafka-go.v1 v1.7.0
 	gopkg.in/go-playground/validator.v9 v9.31.0
 	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
